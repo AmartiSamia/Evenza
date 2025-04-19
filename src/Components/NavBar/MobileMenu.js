@@ -72,7 +72,7 @@ const MobileMenu = ({ setOpacity }) => {
       <div
         id="mobile-menu"
         ref={menuRef} // Add ref to the menu element
-        className={`lg:hidden fixed inset-y-0 right-0 w-1/2 bg-[#112240] bg-opacity-100 p-3 transition-transform duration-300 ${
+        className={`lg:hidden fixed inset-y-0 right-0 w-1/2 bg-[#23195F] bg-opacity-100 p-3 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -86,40 +86,35 @@ const MobileMenu = ({ setOpacity }) => {
           </button>
         </div>
         
-        <nav className="bg-[#112240] flex justify-center items-center h-max text-[#FF50A3] text-lg pt-10">
-          <ul className="block justify-center items-center space-y-10 pt-1">
+        <nav className="bg-[#23195F] flex justify-center items-center h-max text-[#FF50A3] text-lg pt-10">
+          <ul className="block justify-center items-center space-y-[49px] pt-9  ">
             <li>
               <a href="#about" onClick={() => handleClick("about")} className="hover:text-[#FF50A3]">
                 <div className="flex justify-center"></div>
-                <span className="text-[#CCD6F6] hover:text-[#FF50A3] flex justify-center">Home</span>
+                <span className="text-white font-semibold hover:text-[#FF50A3]  flex justify-center">Home</span>
               </a>
             </li>
             <li>
               <a href="#experience" onClick={() => handleClick("experience")} className="hover:text-[#FF50A3]">
                 <div className="flex justify-center"> </div>
-                <span className="text-[#CCD6F6] hover:text-[#FF50A3] flex justify-center">About us</span>
+                <span className="text-white font-semibold hover:text-[#FF50A3] flex justify-center">About us</span>
               </a>
             </li>
             <li>
               <a href="#skills" onClick={() => handleClick("skills")} className="hover:text-[#FF50A3]">
                 <div className="flex justify-center"> </div>
-                <span className="text-[#CCD6F6] hover:text-[#FF50A3] flex justify-center">Events</span>
+                <span className="text-white font-semibold hover:text-[#FF50A3] flex justify-center">Events</span>
               </a>
             </li>
             <li>
               <a href="#projects" onClick={() => handleClick("projects")} className="hover:text-[#FF50A3]">
                 <div className="flex justify-center"></div>
-                <span className="text-[#CCD6F6] hover:text-[#FF50A3] flex justify-center">Contact</span>
+                <span className="text-white font-semibold hover:text-[#FF50A3] flex justify-center">Contact</span>
               </a>
             </li>
-            {/* <li>
-              <a href="#certifications" onClick={() => handleClick("certifications")} className="hover:text-[#FF50A3]">
-                <div className="flex justify-center"> </div>
-                <span className="text-[#CCD6F6] hover:text-[#FF50A3] flex justify-center">Certifications</span>
-              </a>
-            </li> */}
+          
             <li>
-              <a href="#contact" onClick={() => handleClick("contact")} className="border border-[#FF50A3] px-4 py-2 rounded hover:bg-[#FF50A3] hover:text-[#0a192f] flex justify-center">
+              <a href="#contact" onClick={() => handleClick("contact")} className="bg-transparent font-semibold  text-white border-2 border-[#FF50A3] justify-center rounded-full px-6 py-2 hover:bg-[#FF50A3] hover:text-[#0a192f] hover:font-bold transition-colors duration-300">
                 Register
               </a>
             </li>

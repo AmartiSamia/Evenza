@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import MobileMenu from './Components/NavBar/MobileMenu.js';
 import NavBar from './Components/NavBar/Navbar.js'; // attention à la casse si tu utilises `Navbar` vs `NavBar`
 import Accroche from './Components/Accroche.js';
-
+import Logo from './/Assets/EvenzaLogo.png';
 export default function App({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -34,7 +34,7 @@ export default function App({ children }) {
   return (
     <html lang="en">
       <head>
-        <title>Samia El Amarti</title>
+        <title>Evenza</title>
         <link
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
           rel="stylesheet"
@@ -48,30 +48,41 @@ export default function App({ children }) {
           url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap");
         </style>
       </head>
-      <body className="bg-[#0a192f] text-white p-5 lg:px-11 sm:p-1 sm:pt-4">
+
+
+
+      <body className="bg-[#23195A] text-whitesm:p-1 sm:pt-4">
+        {/* Navbar and accroche with the same color */}
+        <section className='bg-[#23195A]'>
+      {/* Navbar for mobile and desktop */}
         <header
-          className={`flex justify-between items-center px-7 py-3 fixed top-0 left-0 w-full z-50 bg-[#0a192f] transition-all duration-300 ${
+          className={`flex justify-between items-center px-7 py-3 fixed top-0 left-0 w-full z-50 bg-[#23195A] transition-all duration-300 ${
             !isNavbarVisible ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         >
           <div className="flex items-center">
-            <div
-              id="logo"
-              onClick={handleLogoClick}
-              style={{ cursor: 'pointer' }}
-              className="text-white text-4xl font-bold flex items-center m-0 pl-4 lg:static max-sm:ml-[-20px]"
-            >
-              <div className="text-gray-400">{'{'}</div>
-              <div className="text-[#64ffda] mx-0">S</div>
-              <div className="text-gray-400">{'}'}</div>
-            </div>
+          <div
+  id="logo"
+  onClick={handleLogoClick}
+  style={{ cursor: 'pointer' }}
+  className="text-white text-4xl font-bold flex items-center m-0 pl-4 lg:static max-sm:ml-[-20px]"
+>
+<img
+  src={Logo}
+  alt="Logo"
+  className=" pl-[20px] h-[38px] object-contain"
+/>
+
+</div>
+
           </div>
           <NavBar />
           <MobileMenu setOpacity={setMenuOpen} />
         </header>
 
-        <main className="pt-24">{children}</main>
+        <main className="pt-2">{children}</main>
         <Accroche />
+        </section>
       </body>
     </html>
   );

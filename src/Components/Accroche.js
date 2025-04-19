@@ -1,59 +1,41 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import ImageAccroche from '../Assets/AccrocheSection/AccrocheImage.png'; // Adjust the path as necessary
 
 export default function Accroche() {
-  useEffect(() => {
-    const fillDots = (containerSelector, id) => {
-      const container = document.querySelector(containerSelector);
-      const template = document.getElementById(id);
-      if (container && template) {
-        for (let i = 0; i < 36; i++) {
-          container.appendChild(template.content.cloneNode(true));
-        }
-      }
-    };
-
-    fillDots('.dots-top-left', 'dots-template');
-    fillDots('.dots-bottom-right', 'dots-template-2');
-  }, []);
-
   return (
-    <section className="relative max-w-[1080px] mx-auto px-6 py-16 sm:py-20 lg:py-24 flex flex-col sm:flex-row items-center sm:items-stretch gap-6 sm:gap-0 bg-[#1B1B4B]">
-      {/* Left side content */}
-      <div className="relative flex-1 flex flex-col justify-center text-white max-w-xl">
-        {/* Top left dotted square */}
-        <div className="absolute top-0 left-0 w-24 h-24 grid grid-cols-6 grid-rows-6 gap-1 dots-top-left">
-          <template id="dots-template">
-            <span className="block w-1.5 h-1.5 rounded-full bg-white opacity-60"></span>
-          </template>
-        </div>
-
-        <p className="text-pink-500 text-[10px] font-semibold uppercase tracking-widest mb-2">
-          Upcoming New Event 2024
-        </p>
-        <h1 className="text-white font-extrabold text-4xl sm:text-5xl leading-tight mb-4">
-          World Biggest
-          <br />
-          Webinar
-        </h1>
-        <p className="text-white text-[13px] leading-snug mb-8 max-w-md">
-          Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-          Lorem Ipsum has been the industry's standard dummy text ever since the 1500s
-        </p>
-        <button className="w-max bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-2 rounded-full text-white text-sm font-medium hover:brightness-110 transition">
-          Get Tickets
-        </button>
+    <section className="font-montreal relative min-h-screen w-full flex items-center justify-center">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={ImageAccroche}
+          alt="Background"
+          className="w-full h-full object-cover"
+        />
+        {/* Overlay */}
+        <div className="absolute"></div>
       </div>
 
-      {/* Right side image with background */}
-      <div className="relative flex-1 rounded-tl-[80px] rounded-bl-[80px] overflow-hidden max-w-[400px] sm:max-w-none sm:flex-1">
-        <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-700 rounded-tl-[80px] rounded-bl-[80px]"></div>
-        <img
-          src="https://storage.googleapis.com/a1aa/image/807cad86-347d-4d9d-87f6-c62c119360f0.jpg"
-          alt="Man holding mic"
-          className="relative object-cover w-full h-full rounded-tl-[80px] rounded-bl-[80px]"
-        />
+      {/* Content on top of the background */}
+      <div className="relative z-10 max-w-[1080px] mx-auto px-6 ml-[350px] py-16 sm:py-20 lg:py-24 text-white">
+        {/* Dotted square (top left) */}
 
-        {/* Bottom right dotted square */}
+
+        <div className="max-w-2xl">
+          <p className="text-pink-300 text-[10px] font-semibold uppercase tracking-widest mb-2">
+            Welcome to Evenza
+          </p>
+          <h1 className="text-white font-extrabold text-4xl sm:text-5xl leading-tight mb-4">
+            Plan Today,<br />Celebrate Tomorrow
+          </h1>
+          <p className="text-white text-[13px] leading-snug mb-8 max-w-md">
+            With Evenza, organizing events has never been easier. From private parties to global conferences, we turn your vision into unforgettable moments—seamlessly and stress-free.
+          </p>
+          <button className="w-max bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-2 rounded-full text-white text-sm font-medium hover:brightness-110 transition">
+            Get Started
+          </button>
+        </div>
+
+        {/* Dotted square (bottom right) */}
         <div className="absolute bottom-6 right-6 w-24 h-24 grid grid-cols-6 grid-rows-6 gap-1 dots-bottom-right">
           <template id="dots-template-2">
             <span className="block w-1.5 h-1.5 rounded-full bg-white opacity-60"></span>

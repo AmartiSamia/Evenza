@@ -4,7 +4,10 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
-  },
+    extend: {
+      fontFamily: {
+        montreal: ['"Neue Montreal"', 'sans-serif'],
+      },
+    },},
   plugins: [],
 }
