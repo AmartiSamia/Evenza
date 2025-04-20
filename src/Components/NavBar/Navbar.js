@@ -10,7 +10,8 @@ const NavBar = () => {
   };
 
   return (
-    <div id="NavBar_principal" className="hidden lg:block font-montreal">
+  // <div className='row flex'>
+    <div id="NavBar_principal" className="hidden lg:block font-montreal  ">
       <nav className="flex items-center space-x-10 text-[#FF50A3] text-sm">
         <a href="#about" onClick={() => handleClick("about")} className="hover:text-[#FF50A3]">
           <span className="text-white font-semibold  hover:text-[#FF50A3]">Home</span>
@@ -28,7 +29,10 @@ const NavBar = () => {
   Register
 </a>
       </nav>
+      
     </div>
+        //  <hr className='border-b border-gray-300 w-full' />
+        //  </div>
   );
 };
 

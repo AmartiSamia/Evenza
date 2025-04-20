@@ -78,8 +78,8 @@ export default function App({ children }) {
           </div>
           <NavBar />
           <MobileMenu setOpacity={setMenuOpen} />
+         
         </header>
-
         <main className="pt-2">{children}</main>
         <Accroche />
         </section>
