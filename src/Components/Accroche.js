@@ -32,7 +32,7 @@ const Accroche = () => {
           </div>
           
           {/* Text content container with proper mobile centering */}
-          <div className='max-sm:w-full max-sm:text-center sm:ml-[30px] sm:w-[400px] lg:ml-[220px] lg:w-[960px] lg:mt-[-50px] sm:mt-[-20px]'>
+          <div className='max-sm:w-full max-sm:text-center sm:ml-[30px] sm:w-[400px] lg:ml-[180px] lg:w-[960px] lg:mt-[-50px] sm:mt-[-20px]'>
             <p className="text-pink-500 max-sm:text-2xl sm:text-2xl lg:text-4xl uppercase tracking-wider font-medium mb-2">
               WELCOME TO
             </p>

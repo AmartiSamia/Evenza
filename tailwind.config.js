@@ -7,6 +7,7 @@ module.exports = {
     extend: {
       fontFamily: {
         montreal: ['"Neue Montreal"', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
     },},
   plugins: [],

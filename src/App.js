@@ -4,6 +4,7 @@ import MobileMenu from './Components/NavBar/MobileMenu.js';
 import NavBar from './Components/NavBar/Navbar.js'; // attention à la casse si tu utilises `Navbar` vs `NavBar`
 import Accroche from './Components/Accroche.js';
 import Logo from './/Assets/EvenzaLogo.png';
+import About from './About/About.js';
 export default function App({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -39,6 +40,8 @@ export default function App({ children }) {
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
           rel="stylesheet"
         />
+        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet"/>
+
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
@@ -51,7 +54,7 @@ export default function App({ children }) {
 
 
 
-      <body className="bg-[#23195A] text-whitesm:p-1 sm:pt-4">
+      <body className="text-whitesm:p-1 sm:pt-4">
         {/* Navbar and accroche with the same color */}
         <section className='bg-[#23195A]'>
       {/* Navbar for mobile and desktop */}
@@ -82,6 +85,9 @@ export default function App({ children }) {
         </header>
         <main className="pt-2">{children}</main>
         <Accroche />
+        </section>
+        <section className="bg-[#F8F6FF]">
+        <About />
         </section>
       </body>
     </html>
