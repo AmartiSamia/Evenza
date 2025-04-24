@@ -28,7 +28,7 @@ const EventFeatures = () => {
   // Custom Feature Icon Component with circle pink background
   const FeatureIcon = () => (
     <div className="mb-4 ">
-      <div className="relative w-16 h-16 max-sm:w-12 max-sm:h-12">
+      <div className="relative w-16 h-16 max-sm:w-12 max-sm:h-12 ">
         {/* Pink shadow/glow effect */}
         <div className="absolute -top-1 -left-1 w-18 h-18 max-sm:w-13 max-sm:h-13 bg-pink-100 rounded-full opacity-50 blur-sm"></div>
         
@@ -55,7 +55,7 @@ const EventFeatures = () => {
   );
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-[109px] max-sm:pt-[60px] mb-12">
+    <section className="max-w-7xl mx-auto px-4 py-[109px] max-sm:pt-[60px] mb-12 max-sm:mb-[-20px]">
       <div className="text-center mb-12">
         <p className="text-sm text-gray-600 mb-2">
           Event Features

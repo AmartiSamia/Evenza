@@ -6,6 +6,9 @@ import Accroche from './Components/Accroche.js';
 import Logo from './/Assets/EvenzaLogo.png';
 import About from './About/About.js';
 import EventFeatures from './EventFeatures.js';
+import Events from './Events.js';
+
+
 export default function App({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -92,6 +95,9 @@ export default function App({ children }) {
         </section>
         <section className='bg-[#FFFFFF]'>
           <EventFeatures />
+          </section>
+          <section className='bg-[#221858]'>
+            <Events />
           </section>
       </body>
     </html>
