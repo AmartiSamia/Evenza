@@ -5,7 +5,7 @@ import Video from './../Assets/About/Video.png';
 
 const About = () => {
   return (
-    <section className="max-w-7xl mx-auto pl-36 py-[116px] bg-[#F8F6FF] font-inter">
+    <section className="max-w-7xl mx-auto pl-36 py-[116px] bg-[#F8F6FF] font-inter max-sm:mb-[-65px]">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-20">
         {/* Left side images container */}
         <div className="relative flex-shrink-0 ml-[-169px] mt-[-50px] md:mt-0 md:ml-0">

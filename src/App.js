@@ -5,6 +5,7 @@ import NavBar from './Components/NavBar/Navbar.js'; // attention à la casse si 
 import Accroche from './Components/Accroche.js';
 import Logo from './/Assets/EvenzaLogo.png';
 import About from './About/About.js';
+import EventFeatures from './EventFeatures.js';
 export default function App({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -89,6 +90,9 @@ export default function App({ children }) {
         <section className="bg-[#F8F6FF]">
         <About />
         </section>
+        <section className='bg-[#FFFFFF]'>
+          <EventFeatures />
+          </section>
       </body>
     </html>
   );
