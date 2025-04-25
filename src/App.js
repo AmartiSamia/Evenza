@@ -7,6 +7,7 @@ import Logo from './/Assets/EvenzaLogo.png';
 import About from './About/About.js';
 import EventFeatures from './EventFeatures.js';
 import Events from './Events.js';
+import StatsCards from './Components/StatsCards.js';
 
 
 export default function App({ children }) {
@@ -98,6 +99,9 @@ export default function App({ children }) {
           </section>
           <section className='bg-[#221858]'>
             <Events />
+          </section>
+          <section className='bg-[#FFFFFF]'>
+            <StatsCards />
           </section>
       </body>
     </html>

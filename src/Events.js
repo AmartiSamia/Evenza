@@ -56,7 +56,7 @@ const EventCard = ({ event }) => (
       </div>
     </div>
     
-    <div className="flex-1  ml-[120px] sm:ml-[45px] max-sm:ml-0 max-sm:mb-6">
+    <div className="flex-1 lg:ml-[115px] sm:ml-[45px] max-sm:ml-0 max-sm:mb-6">
       <h2 className="text-white text-xl font-medium mb-3">{event.name}</h2>
       <div className="flex max-sm:flex-col max-sm:space-y-3 sm:items-center sm:space-x-6 text-sm text-gray-300">
         <div className="flex items-center">
@@ -83,7 +83,7 @@ const EventCard = ({ event }) => (
 );
 
 const Events = () => (
-  <div className="min-h-screen flex items-center justify-center p-6 pt-[110px] sm:mx-[60px] max-sm:mx-[40px] ">
+  <div className="min-h-screen flex items-center justify-center p-6 lg:pb-[52px]  pt-[110px] sm:mx-[60px] max-sm:mx-[40px] ">
     <div className="max-w-4xl w-full">
       <div className="text-center mb-[69px] max-sm:mt-[-35px] max-sm:mb-[40px] ">
         <p className="text-white text-sm mb-1 ">Schedule Of Event</p>
