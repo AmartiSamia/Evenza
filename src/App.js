@@ -8,6 +8,10 @@ import About from './About/About.js';
 import EventFeatures from './EventFeatures.js';
 import Events from './Events.js';
 import StatsCards from './Components/StatsCards.js';
+import Team from './Components/Team.js';
+import Testimonials from './Components/Testimonials.js';
+import Footer from './Components/Footer.js';
+import FAQ from './Components/FAQ.js';
 
 
 export default function App({ children }) {
@@ -102,6 +106,18 @@ export default function App({ children }) {
           </section>
           <section className='bg-[#FFFFFF]'>
             <StatsCards />
+          </section>
+          <section className='bg-[#F8F6FF]'>
+            <Team />
+          </section>
+          <section className='bg-[#221858]'>
+            <Testimonials />
+          </section>
+          <section className='bg-[#FFFFFF]'>
+            <FAQ />
+          </section>
+          <section className='bg-[#F8F6FF]'>
+            <Footer />
           </section>
       </body>
     </html>
