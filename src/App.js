@@ -12,6 +12,7 @@ import Team from './Components/Team.js';
 import Testimonials from './Components/Testimonials.js';
 import Footer from './Components/Footer.js';
 import FAQ from './Components/FAQ.js';
+import EvenzaLoginPage from './Components/EvenzaLoginPage.js';
 
 
 export default function App({ children }) {
@@ -65,7 +66,7 @@ export default function App({ children }) {
 
       <body className="text-whitesm:p-1 sm:pt-4">
         {/* Navbar and accroche with the same color */}
-        <section className='bg-[#23195A]'>
+        {/* <section className='bg-[#23195A]'> */}
       {/* Navbar for mobile and desktop */}
         <header
           className={`flex justify-between items-center px-7 py-3 fixed top-0 left-0 w-full z-50 bg-[#23195A] transition-all duration-300 ${
@@ -92,7 +93,7 @@ export default function App({ children }) {
           <MobileMenu setOpacity={setMenuOpen} />
          
         </header>
-        <main className="pt-2">{children}</main>
+        {/* <main className="pt-2">{children}</main>
         <Accroche />
         </section>
         <section className="bg-[#F8F6FF]">
@@ -118,6 +119,9 @@ export default function App({ children }) {
           </section>
           <section className='bg-[#F8F6FF]'>
             <Footer />
+          </section> */}
+          <section className="bg-[#221858]">
+          <EvenzaLoginPage/>
           </section>
       </body>
     </html>
