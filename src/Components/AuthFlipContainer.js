@@ -167,20 +167,20 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
   );
 
   return (
-    <div className="flex  max-sm:mt-[-32px] justify-center items-center min-h-screen py-16 px-4 bg-gradient-to-b from-[#1A1346] to-[#25195E] sm:p-10">
+    <div className=" flex my-[30px]  max-sm:mt-[-32px] mt-[-38px] justify-center items-center min-h-screen py-16 px-4 bg-gradient-to-b from-[#1A1346] to-[#25195E] sm:p-10">
       <div className="w-full max-w-6xl h-[600px] max-sm:h-[1200px] sm:h-[650px] relative perspective-300">
         {/* Ambient background effects */}
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-pink-500 rounded-full filter blur-3xl opacity-20 animate-pulse-slow"></div>
         <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-indigo-500 rounded-full filter blur-3xl opacity-20 animate-pulse-slow"></div>
         
         {/* Card container */}
-        <div className={`relative max-sm:h-full w-full h-full transition-transform duration-700 ease-in-out transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+        <div className={`relative max-sm:h-full w-full h-[710px] min-h-[710px] transition-transform duration-700 ease-in-out transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
           {/* Front - Login */}
           <div className={`absolute max-sm:rounded-l-3xl max-sm:h-[750px] max-sm:min-h-[950px]  w-full h-full backface-hidden ${isFlipped ? 'z-0' : 'z-10'}`}>
             <div className="flex w-full h-full overflow-hidden rounded-3xl shadow-2xl flex-col sm:flex-row hover:shadow-indigo-900/20 transition-all duration-300">
               <div className="w-full max-sm:h-[1000px] sm:w-1/2 flex flex-col justify-center px-6 py-8 sm:px-12 sm:py-8 bg-[#F8F6FF] max-h-full overflow-y-auto">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-indigo-950">Login</h2>
-                <p className="text-gray-600 text-sm sm:text-base mb-6 sm:mb-8">Login to access your Evenza account</p>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-pink-500 text-center">Login</h2>
+                <p className="text-[#802BC9] text-center text-sm sm:text-base mb-6 sm:mb-8">Login to access your Evenza account</p>
 
                 <form onSubmit={handleLoginSubmit}>
                   <div className="mb-4 group">
@@ -273,9 +273,9 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
           <div className="flex w-full h-full overflow-hidden rounded-3xl shadow-2xl flex-col sm:flex-row hover:shadow-indigo-900/20 transition-all duration-300 max-sm:rounded-l-3xl">
               {renderImageSection(false)}
 
-         <div className="w-full sm:w-1/2  max-sm:min-h-[680px] flex flex-col justify-center px-6 py-8 sm:px-12 sm:py-8 bg-[#F8F6FF]  max-sm:pt-[1px] rounded-b-3xl sm:rounded-r-3xl sm:rounded-bl-none max-h-full overflow-y-auto max-sm:rounded-l-3xl">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-indigo-950 ">Sign Up</h2>
-                
+         <div className="w-full sm:w-1/2  max-sm:min-h-[750px] flex flex-col justify-center px-6 py-8 sm:px-12 sm:py-8 bg-[#F8F6FF]  max-sm:pt-[1px] rounded-b-3xl sm:rounded-r-3xl sm:rounded-bl-none max-h-full overflow-y-auto max-sm:rounded-l-3xl">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-pink-500 text-center ">Sign Up</h2>
+                <p className="text-[#802BC9] text-center text-sm sm:text-base mb-6 sm:mb-8">Sign Up to access your Evenza account</p>
                 <form onSubmit={handleSignupSubmit}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div className="group">
