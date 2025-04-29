@@ -79,7 +79,7 @@ const WavePattern = ({ color }) => {
 
 const StatsCards = () => {
   return (
-    <div className="py-8 max-sm:py-6 sm:my-12 lg:my-20 sm:mx-6 lg:mx-12 flex items-center justify-center">
+    <div className="py-8 max-sm:py-6 sm:mb-12 lg:my-20 pt-[90px] sm:mx-6 lg:mx-12 flex items-center justify-center">
       <div className="flex flex-col max-sm:items-center gap-4 sm:gap-6 lg:gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-4 max-w-6xl w-full justify-center">
         {stats.map((item, index) => (
           <div

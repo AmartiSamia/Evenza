@@ -1,30 +1,36 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
-// A React component that receives a prop called setOpacity to control the opacity
-const MobileMenu = ({ setOpacity }) => {
-  const [isOpen, setIsOpen] = useState(false); // Stores if the menu is open or not
+const MobileMenu = ({ 
+  isOpen, 
+  setOpen, 
+  onRegisterClick, 
+  onLoginClick,
+  onNavLinkClick 
+}) => {
   const menuRef = useRef(null); // Reference to the menu element
   
-  // Handle clicking on navigation items
-  const handleClick = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+  // Close the menu
+  const closeMenu = () => {
+    setOpen(false);
+  };
+
+  // Handle register click
+  const handleRegisterClick = () => {
+    onRegisterClick();
     closeMenu();
   };
 
-  // Toggle menu open/closed
-  const toggleMenu = () => {
-    setIsOpen(!isOpen); // Open/close
-    setOpacity(!isOpen); // Opacity change based on setIsOpen
+  // Handle login click
+  const handleLoginClick = () => {
+    onLoginClick();
+    closeMenu();
   };
 
-  // Close the menu
-  const closeMenu = () => {
-    setIsOpen(false); // Close the menu
-    setOpacity(false); // Reset opacity when the menu is closed
+  // Handle navigation link click
+  const handleNavLinkClick = (id) => {
+    onNavLinkClick(id);
+    closeMenu();
   };
 
   // Effect to handle clicks outside the menu
@@ -52,27 +58,12 @@ const MobileMenu = ({ setOpacity }) => {
 
   return (
     <>
-      {/* Hamburger Button */}
-      <div className="block lg:hidden sm:p-0.5">
-        <button
-          onClick={toggleMenu}
-          id="hamburger"
-          className="text-[#FF50A3]"
-        >
-          {/* Toggle Hamburger Icon */}
-          {isOpen ? (
-            <i id="close-icon" className="fas fa-times text-3xl"></i> // Open close icon appears
-          ) : (
-            <i className="fa-sharp fa-solid fa-bars-staggered text-3xl"></i> // Close the bar icon shows
-          )}
-        </button>
-      </div>
-
+      {/* Hamburger Button - This should be moved to the header component */}
       {/* Mobile Menu */}
       <div
         id="mobile-menu"
-        ref={menuRef} // Add ref to the menu element
-        className={`lg:hidden fixed inset-y-0 right-0 w-1/2 bg-[#23195F] bg-opacity-100 p-3 transition-transform duration-300 ${
+        ref={menuRef}
+        className={`lg:hidden fixed inset-y-0 right-0 w-3/4 sm:w-1/2 bg-[#23195F] bg-opacity-100 p-3 transition-transform duration-300 ease-in-out z-40 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -82,41 +73,59 @@ const MobileMenu = ({ setOpacity }) => {
             onClick={closeMenu}
             className="text-[#FF50A3]"
           >
-            <i id="close-icon" className="fas fa-times text-5xl"></i>
+            <i id="close-icon" className="fas fa-times text-3xl"></i>
           </button>
         </div>
         
         <nav className="bg-[#23195F] flex justify-center items-center h-max text-[#FF50A3] text-lg pt-10">
-          <ul className="block justify-center items-center space-y-[49px] pt-9  ">
+          <ul className="block justify-center items-center space-y-8 pt-9 w-full px-4">
             <li>
-              <a href="#about" onClick={() => handleClick("about")} className="hover:text-[#FF50A3]">
-                <div className="flex justify-center"></div>
-                <span className="text-white font-semibold hover:text-[#FF50A3]  flex justify-center">Home</span>
-              </a>
+              <button 
+                onClick={() => handleNavLinkClick("home")}
+                className="hover:text-[#FF50A3] w-full text-center"
+              >
+                <span className="text-white font-semibold hover:text-[#FF50A3]">Home</span>
+              </button>
             </li>
             <li>
-              <a href="#experience" onClick={() => handleClick("experience")} className="hover:text-[#FF50A3]">
-                <div className="flex justify-center"> </div>
-                <span className="text-white font-semibold hover:text-[#FF50A3] flex justify-center">About us</span>
-              </a>
+              <button 
+                onClick={() => handleNavLinkClick("about")}
+                className="hover:text-[#FF50A3] w-full text-center"
+              >
+                <span className="text-white font-semibold hover:text-[#FF50A3]">About us</span>
+              </button>
             </li>
             <li>
-              <a href="#skills" onClick={() => handleClick("skills")} className="hover:text-[#FF50A3]">
-                <div className="flex justify-center"> </div>
-                <span className="text-white font-semibold hover:text-[#FF50A3] flex justify-center">Events</span>
-              </a>
+              <button 
+                onClick={() => handleNavLinkClick("events")}
+                className="hover:text-[#FF50A3] w-full text-center"
+              >
+                <span className="text-white font-semibold hover:text-[#FF50A3]">Events</span>
+              </button>
             </li>
             <li>
-              <a href="#projects" onClick={() => handleClick("projects")} className="hover:text-[#FF50A3]">
-                <div className="flex justify-center"></div>
-                <span className="text-white font-semibold hover:text-[#FF50A3] flex justify-center">Contact</span>
-              </a>
+              <button 
+                onClick={() => handleNavLinkClick("contact")}
+                className="hover:text-[#FF50A3] w-full text-center"
+              >
+                <span className="text-white font-semibold hover:text-[#FF50A3]">Contact</span>
+              </button>
             </li>
-          
+            <li className="pt-4">
+              <button 
+                onClick={handleLoginClick}
+                className="bg-transparent font-semibold text-white border-2 border-[#FF50A3] rounded-full px-6 py-2 hover:bg-[#FF50A3] hover:text-[#0a192f] hover:font-bold transition-colors duration-300 w-full"
+              >
+                Login
+              </button>
+            </li>
             <li>
-              <a href="#contact" onClick={() => handleClick("contact")} className="bg-transparent font-semibold  text-white border-2 border-[#FF50A3] justify-center rounded-full px-6 py-2 hover:bg-[#FF50A3] hover:text-[#0a192f] hover:font-bold transition-colors duration-300">
+              <button 
+                onClick={handleRegisterClick}
+                className="bg-transparent font-semibold text-white border-2 border-[#FF50A3] rounded-full px-6 py-2 hover:bg-[#FF50A3] hover:text-[#0a192f] hover:font-bold transition-colors duration-300 w-full"
+              >
                 Register
-              </a>
+              </button>
             </li>
           </ul>
         </nav>
