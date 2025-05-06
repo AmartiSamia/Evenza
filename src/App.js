@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import MobileMenu from './Components/NavBar/MobileMenu.js';
 import NavBar from './Components/NavBar/Navbar.js';
 import Logo from './Assets/EvenzaLogo.png';
@@ -13,6 +13,7 @@ import Team from './Components/Team.js';
 import Testimonials from './Components/Testimonials.js';
 import Footer from './Components/Footer.js';
 import FAQ from './Components/FAQ.js';
+import { Toaster } from 'react-hot-toast';
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,12 +24,7 @@ export default function App() {
 
   const setMenuOpen = (isOpen) => {
     setIsMenuOpen(isOpen);
-    // When mobile menu opens, we should prevent body scrolling
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+    document.body.style.overflow = isOpen ? 'hidden' : 'auto';
   };
 
   const handleLogoClick = () => {
@@ -40,42 +36,21 @@ export default function App() {
     setShowAuthPage(true);
     setIsLoginView(showLogin);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Close mobile menu if open
-    if (isMenuOpen) {
-      setMenuOpen(false);
-    }
+    if (isMenuOpen) setMenuOpen(false);
   };
 
   const handleNavLinkClick = (id) => {
     setShowAuthPage(false);
     const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-    // Close mobile menu if open
-    if (isMenuOpen) {
-      setMenuOpen(false);
-    }
+    if (element) element.scrollIntoView({ behavior: "smooth" });
+    if (isMenuOpen) setMenuOpen(false);
   };
 
   useEffect(() => {
-    let ticking = false;
-    
     const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          // Don't hide navbar if mobile menu is open
-          if (!isMenuOpen) {
-            if (window.scrollY > lastScrollY) {
-              setIsNavbarVisible(false);
-            } else {
-              setIsNavbarVisible(true);
-            }
-          }
-          setLastScrollY(window.scrollY);
-          ticking = false;
-        });
-        ticking = true;
+      if (!isMenuOpen) {
+        setIsNavbarVisible(window.scrollY <= lastScrollY);
+        setLastScrollY(window.scrollY);
       }
     };
 
@@ -83,32 +58,33 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY, isMenuOpen]);
 
-  return (<>
-    <head><link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    integrity="sha512-bxj6yWgK9nhSmtUdowyoQIfOL8AbUuVn4jlXoU5N6Z7AlkZ+wvYimE2hrB3mJ7lpyOjA9MT8s3t6fsWvUDE2rQ=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
-  </head>
-    <div className="app-container bg-[#23195A]">
-      <div className="text-whitesm:p-1 sm:pt-4">
+  return (
+    <>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+          integrity="sha512-bxj6yWgK9nhSmtUdowyoQIfOL8AbUuVn4jlXoU5N6Z7AlkZ+wvYimE2hrB3mJ7lpyOjA9MT8s3t6fsWvUDE2rQ=="
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+        />
+      </head>
+      <div className="app-container bg-[#23195A]">
+        <Toaster position="top-right" />
+        
         {/* Mobile Menu Overlay */}
         {isMenuOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setMenuOpen(false)}></div>
         )}
 
-        {/* Mobile Menu */}
         <MobileMenu
-  isOpen={isMenuOpen}
-  setOpen={setMenuOpen}
-  onRegisterClick={() => toggleAuthPage(false)}
-  onLoginClick={() => toggleAuthPage(true)}
-  onNavLinkClick={handleNavLinkClick}
-/>
+          isOpen={isMenuOpen}
+          setOpen={setMenuOpen}
+          onRegisterClick={() => toggleAuthPage(false)}
+          onLoginClick={() => toggleAuthPage(true)}
+          onNavLinkClick={handleNavLinkClick}
+        />
 
-        {/* Navbar */}
         <header
           className={`flex justify-between items-center px-7 py-3 fixed top-0 left-0 w-full z-50 bg-[#23195A] transition-all duration-300 ${
             !isNavbarVisible && !isMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
@@ -133,21 +109,19 @@ export default function App() {
             onLoginClick={() => toggleAuthPage(true)}
             onNavLinkClick={handleNavLinkClick}
           />
-          {/* Mobile Menu Button */}
           <button 
-  onClick={() => setMenuOpen(!isMenuOpen)}
-  id="hamburger"
-  className="lg:hidden text-[#FF50A3]"
->
-  {isMenuOpen ? (
-    <i id="close-icon" className="fas fa-times text-3xl"></i>
-  ) : (
-    <i className="fa-sharp fa-solid fa-bars-staggered text-3xl"></i>
-  )}
-</button>
+            onClick={() => setMenuOpen(!isMenuOpen)}
+            id="hamburger"
+            className="lg:hidden text-[#FF50A3]"
+          >
+            {isMenuOpen ? (
+              <i id="close-icon" className="fas fa-times text-3xl"></i>
+            ) : (
+              <i className="fa-sharp fa-solid fa-bars-staggered text-3xl"></i>
+            )}
+          </button>
         </header>
 
-        {/* Main Content */}
         {showAuthPage ? (
           <section className="bg-[#221858] pt-16">
             <AuthFlipContainer 
@@ -171,11 +145,11 @@ export default function App() {
               <Events />
             </section>
             <section className="bg-[#FFFFFF]">
-              <StatsCards />
-            </section>
+              <StatsCards  className="bg-[#FFFFFF]"/>
+         
             <section className="bg-[#F8F6FF]">
               <Team />
-            </section>
+            </section>   </section>
             <section id="testimonials" className="bg-[#221858]">
               <Testimonials />
             </section>
@@ -188,6 +162,6 @@ export default function App() {
           </>
         )}
       </div>
-    </div></>
+    </>
   );
 }

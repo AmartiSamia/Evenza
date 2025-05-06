@@ -2,7 +2,7 @@ import React from 'react';
 
 const FAQ = () => {
   return (
-    <div className=" max-sm:mx-[15px] lg:mx-[240px] bg-white py-8 sm:py-16 px-4 ">
+    <div className="flex justify-center max-sm:mx-[15px] lg:mx-[240px] bg-white py-8 sm:py-16 px-4 ">
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 sm:mx-[10px] sm:gap-10 md:grid-cols-2 gap-8">
         {/* Left Side */}
         <div className="w-full">
