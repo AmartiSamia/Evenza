@@ -14,6 +14,7 @@ import Testimonials from './Components/Testimonials.js';
 import Footer from './Components/Footer.js';
 import FAQ from './Components/FAQ.js';
 import { Toaster } from 'react-hot-toast';
+import Dashboard from '../src/Components/Dashboard .js'; // Import your Dashboard component
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,6 +22,20 @@ export default function App() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  // Check auth status on initial load
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const setMenuOpen = (isOpen) => {
     setIsMenuOpen(isOpen);
@@ -29,11 +44,13 @@ export default function App() {
 
   const handleLogoClick = () => {
     setShowAuthPage(false);
+    setShowDashboard(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleAuthPage = (showLogin = true) => {
     setShowAuthPage(true);
+    setShowDashboard(false);
     setIsLoginView(showLogin);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (isMenuOpen) setMenuOpen(false);
@@ -41,9 +58,33 @@ export default function App() {
 
   const handleNavLinkClick = (id) => {
     setShowAuthPage(false);
+    setShowDashboard(false);
     const element = document.getElementById(id);
     if (element) element.scrollIntoView({ behavior: "smooth" });
     if (isMenuOpen) setMenuOpen(false);
+  };
+
+  const handleLoginSuccess = (userData) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+    setShowAuthPage(false);
+    setShowDashboard(true); // Show dashboard after successful login
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setUser(null);
+    setShowAuthPage(false);
+    setShowDashboard(false);
+    window.location.href = '/';
+  };
+
+  const goToDashboard = () => {
+    setShowAuthPage(false);
+    setShowDashboard(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -83,6 +124,10 @@ export default function App() {
           onRegisterClick={() => toggleAuthPage(false)}
           onLoginClick={() => toggleAuthPage(true)}
           onNavLinkClick={handleNavLinkClick}
+          isAuthenticated={isAuthenticated}
+          user={user}
+          onLogout={handleLogout}
+          onDashboardClick={goToDashboard}
         />
 
         <header
@@ -108,6 +153,10 @@ export default function App() {
             onRegisterClick={() => toggleAuthPage(false)} 
             onLoginClick={() => toggleAuthPage(true)}
             onNavLinkClick={handleNavLinkClick}
+            isAuthenticated={isAuthenticated}
+            user={user}
+            onLogout={handleLogout}
+            onDashboardClick={goToDashboard}
           />
           <button 
             onClick={() => setMenuOpen(!isMenuOpen)}
@@ -122,12 +171,22 @@ export default function App() {
           </button>
         </header>
 
-        {showAuthPage ? (
+        {showDashboard ? (
+          <Dashboard 
+            user={user} 
+            onLogout={handleLogout}
+            onBackToHome={() => {
+              setShowDashboard(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : showAuthPage ? (
           <section className="bg-[#221858] pt-16">
             <AuthFlipContainer 
               isFlipped={!isLoginView}
               onLoginClick={() => setIsLoginView(true)}
               onSignupClick={() => setIsLoginView(false)}
+              onLoginSuccess={handleLoginSuccess}
             />
           </section>
         ) : (
@@ -145,11 +204,11 @@ export default function App() {
               <Events />
             </section>
             <section className="bg-[#FFFFFF]">
-              <StatsCards  className="bg-[#FFFFFF]"/>
-         
-            <section className="bg-[#F8F6FF]">
-              <Team />
-            </section>   </section>
+              <StatsCards className="bg-[#FFFFFF]"/>
+              <section className="bg-[#F8F6FF]">
+                <Team />
+              </section>
+            </section>
             <section id="testimonials" className="bg-[#221858]">
               <Testimonials />
             </section>

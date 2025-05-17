@@ -26,10 +26,10 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
     agreeTerms: false,
     role: 'user'
   });
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://localhost:7169/api/Auth';
 
-  const API_BASE_URL = 'https://localhost:7169/api/Auth'; // Update port as needed
-  const ADMIN_SECRET_KEY = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || 'YourAdminSecretKey';
-
+  const ADMIN_SECRET_KEY = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY;
+  console.log("Admin key:", ADMIN_SECRET_KEY);
   
   useEffect(() => {
     setIsFlipped(externalIsFlipped);

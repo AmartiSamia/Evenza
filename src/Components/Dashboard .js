@@ -1,336 +1,481 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Image from 'next/image';
-import axios from 'axios';
-import AuthService from '../services/authService';
-import { UserCircle, LogOut, Settings, Camera, Edit } from 'lucide-react';
-import ProtectedRoute from './ProtectedRoute';
+import { UserCircle, Calendar, MapPin, Ticket, Settings, Camera, LogOut } from 'lucide-react';
+import NavBar from './NavBar/Navbar.js'; // Importing your NavBar component
+import { useNavigate } from 'react-router-dom';
+import Logo from '../Assets/EvenzaLogo.png'; // Import the logo
 
-const Dashboard = () => {
-  const router = useRouter();
+const Dashboard = ({ onLogout, onBackToHome }) => {
   const [user, setUser] = useState(null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileData, setProfileData] = useState({
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
+  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phoneNumber: '',
     profilePicture: ''
   });
-  const [imagePreview, setImagePreview] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   
-  useEffect(() => {
-    // Get user info on component mount
-    const currentUser = AuthService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setProfileData({
-        firstName: currentUser.firstName || '',
-        lastName: currentUser.lastName || '',
-        email: currentUser.email || '',
-        phoneNumber: currentUser.phoneNumber || '',
-        profilePicture: currentUser.profilePicture || ''
-      });
+  const [upcomingEvents, setUpcomingEvents] = useState([
+    {
+      id: 1,
+      name: "Leadership Conference 2025",
+      date: "February 15, 2025",
+      location: "135 W. 46rd Street, New York",
+      time: "9:15am - 2:15pm"
+    },
+    {
+      id: 2,
+      name: "Digital Marketing Summit",
+      date: "March 22, 2025",
+      location: "135 W. 46rd Street, New York",
+      time: "10:00am - 4:00pm"
     }
+  ]);
+
+  useEffect(() => {
+    // Load user data from localStorage or API
+    const userData = JSON.parse(localStorage.getItem('user')) || {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      phoneNumber: '(555) 123-4567',
+      profilePicture: ''
+    };
+    
+    setUser(userData);
+    setFormData({
+      firstName: userData.firstName || '',
+      lastName: userData.lastName || '',
+      email: userData.email || '',
+      phoneNumber: userData.phoneNumber || '',
+      profilePicture: userData.profilePicture || ''
+    });
   }, []);
 
-  const handleLogout = () => {
-    AuthService.logout();
-    router.push('/login');
-  };
-  
-  const handleProfileChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProfileData({
-      ...profileData,
-      [name]: value
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setProfileData({
-          ...profileData,
-          profilePicture: reader.result
-        });
+      reader.onload = () => {
+        setFormData(prev => ({ ...prev, profilePicture: reader.result }));
       };
       reader.readAsDataURL(file);
     }
   };
-  
-  const handleProfileUpdate = async () => {
-    setIsLoading(true);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
     try {
-      const API_BASE_URL = 'https://localhost:7169/api/User';
-      const token = localStorage.getItem('token');
-      
-      const response = await axios.put(`${API_BASE_URL}/update-profile`, profileData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.data.success) {
-        // Update local storage with new user data
-        const updatedUser = {...user, ...profileData};
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        setIsEditingProfile(false);
-        // Show success message (toast implementation would be needed)
-        alert("Profile updated successfully!");
-      }
+      // Here you would typically send the data to your backend API
+      const updatedUser = { ...user, ...formData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setIsEditing(false);
+      alert('Profile updated successfully!');
     } catch (error) {
-      console.error('Profile update error:', error);
-      alert("Failed to update profile. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error('Update error:', error);
+      alert('Failed to update profile');
     }
   };
 
-  // Function to render profile picture
-  const renderProfilePicture = () => {
-    const profileImage = imagePreview || profileData.profilePicture;
-    
-    if (profileImage) {
-      return (
-        <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-indigo-100">
-          <img 
-            src={profileImage} 
-            alt="Profile" 
-            className="w-full h-full object-cover"
-          />
-          {isEditingProfile && (
-            <label htmlFor="profile-picture" className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 cursor-pointer">
-              <Camera className="h-8 w-8 text-white" />
-              <input 
-                id="profile-picture" 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleImageChange} 
-              />
-            </label>
-          )}
-        </div>
-      );
+  // NavBar handlers
+  const handleNavLinkClick = (section) => {
+    if (section === "home") {
+      onBackToHome(); // Go back to main page
+    } else {
+      const element = document.getElementById(section);
+      if (element) element.scrollIntoView({ behavior: "smooth" });
     }
-    
-    return (
-      <div className="relative w-32 h-32 rounded-full bg-indigo-100 flex items-center justify-center">
-        <UserCircle className="h-20 w-20 text-indigo-600" />
-        {isEditingProfile && (
-          <label htmlFor="profile-picture" className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 cursor-pointer rounded-full">
-            <Camera className="h-8 w-8 text-white" />
-            <input 
-              id="profile-picture" 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              onChange={handleImageChange} 
-            />
-          </label>
-        )}
-      </div>
-    );
+  };
+
+  const handleLogout = () => {
+    onLogout(); // Call the logout function from props
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-indigo-900">Evenza Dashboard</h1>
-          
-          {/* User Menu */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              {profileData.profilePicture ? (
-                <div className="h-10 w-10 rounded-full overflow-hidden">
-                  <img 
-                    src={profileData.profilePicture} 
-                    alt="Profile" 
-                    className="h-full w-full object-cover" 
-                  />
-                </div>
-              ) : (
-                <UserCircle className="h-10 w-10 text-indigo-600" />
-              )}
-              <div className="ml-2">
-                <p className="text-sm font-medium text-gray-700">
-                  {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
-                </p>
-                <p className="text-xs text-gray-500 capitalize">
-                  {user?.role || ''}
-                </p>
-              </div>
-            </div>
-            
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <LogOut className="h-4 w-4 mr-1" /> Logout
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-purple-50">
+      {/* Updated header to match App.js style */}
+      <div className="bg-[#23195A] p-4">
+      {/* <div className="bg-gradient-to-r from-purple-900 to-purple-800 p-4"> */}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <div>
-              <h2 className="text-lg leading-6 font-medium text-gray-900">Personal Profile</h2>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                Your account details and preferences.
-              </p>
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center">
+            <div
+              onClick={onBackToHome}
+              style={{ cursor: 'pointer' }}
+              className="text-white text-4xl font-bold flex items-center m-0 pl-4 lg:static max-sm:ml-[-20px]"
+            >
+              <img
+                src={Logo}
+                alt="Logo"
+                className="pl-[20px] h-[38px] object-contain"
+              />
             </div>
-            {!isEditingProfile ? (
-              <button
-                onClick={() => setIsEditingProfile(true)}
-                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <Edit className="h-4 w-4 mr-1" /> Edit Profile
-              </button>
-            ) : (
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setIsEditingProfile(false)}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleProfileUpdate}
-                  disabled={isLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  {isLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            )}
           </div>
-          
-          <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-            <div className="flex flex-col sm:flex-row">
-              {/* Profile Picture Column */}
-              <div className="w-full sm:w-1/3 flex flex-col items-center justify-start mb-6 sm:mb-0">
-                {renderProfilePicture()}
+          <NavBar 
+            isAuthenticated={true}
+            user={user}
+            onNavLinkClick={handleNavLinkClick}
+            onRegisterClick={() => {}}
+            onLogout={handleLogout}
+            onDashboardClick={() => {}}
+          />
+        </div>
+      </div>
+
+      {/* Dashboard Content */}
+      <div className="max-w-7xl mx-auto p-6 md:p-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="w-full md:w-64 bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="p-6 flex flex-col items-center border-b border-gray-200">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-purple-100 mb-4">
+                {formData.profilePicture ? (
+                  <img 
+                    src={formData.profilePicture} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                    <UserCircle className="h-16 w-16 text-white" />
+                  </div>
+                )}
               </div>
-              
-              {/* Profile Details Column */}
-              <div className="w-full sm:w-2/3">
-                {isEditingProfile ? (
-                  <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-                    <div className="col-span-1">
-                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First name</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        id="firstName"
-                        value={profileData.firstName}
-                        onChange={handleProfileChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
+              <h2 className="text-xl font-semibold">
+                {user?.firstName} {user?.lastName}
+              </h2>
+              <p className="text-gray-600 text-sm">{user?.email}</p>
+            </div>
+            <div className="p-4">
+              <ul className="space-y-2">
+                <li>
+                  <button 
+                    className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 ${activeTab === 'profile' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'hover:bg-purple-100'}`}
+                    onClick={() => setActiveTab('profile')}
+                  >
+                    <UserCircle size={20} />
+                    <span>Profile</span>
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 ${activeTab === 'events' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'hover:bg-purple-100'}`}
+                    onClick={() => setActiveTab('events')}
+                  >
+                    <Calendar size={20} />
+                    <span>My Events</span>
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 ${activeTab === 'tickets' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'hover:bg-purple-100'}`}
+                    onClick={() => setActiveTab('tickets')}
+                  >
+                    <Ticket size={20} />
+                    <span>My Tickets</span>
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 ${activeTab === 'settings' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'hover:bg-purple-100'}`}
+                    onClick={() => setActiveTab('settings')}
+                  >
+                    <Settings size={20} />
+                    <span>Settings</span>
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className="w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 text-red-500 hover:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={20} />
+                    <span>Logout</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 bg-white rounded-xl shadow-md p-6 md:p-8">
+            {activeTab === 'profile' && (
+              <div>
+                <h1 className="text-2xl font-bold text-purple-900 mb-6">Profile Information</h1>
+                
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-gray-700 mb-1 text-sm font-medium">First Name</label>
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-gray-700 mb-1 text-sm font-medium">Last Name</label>
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                        />
+                      </div>
                     </div>
                     
-                    <div className="col-span-1">
-                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last name</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        id="lastName"
-                        value={profileData.lastName}
-                        onChange={handleProfileChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    
-                    <div className="col-span-1">
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
+                    <div>
+                      <label className="block text-gray-700 mb-1 text-sm font-medium">Email</label>
                       <input
                         type="email"
                         name="email"
-                        id="email"
-                        value={profileData.email}
-                        onChange={handleProfileChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        disabled
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100"
+                        readOnly
                       />
-                      <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
                     </div>
                     
-                    <div className="col-span-1">
-                      <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">Phone number</label>
+                    <div>
+                      <label className="block text-gray-700 mb-1 text-sm font-medium">Phone Number</label>
                       <input
                         type="tel"
                         name="phoneNumber"
-                        id="phoneNumber"
-                        value={profileData.phoneNumber}
-                        onChange={handleProfileChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
                       />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-gray-700 mb-1 text-sm font-medium">Profile Picture</label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-purple-100">
+                          {formData.profilePicture ? (
+                            <img 
+                              src={formData.profilePicture} 
+                              alt="Profile" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                              <UserCircle className="h-8 w-8 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <label className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg cursor-pointer hover:bg-purple-200 flex items-center gap-2">
+                          <Camera size={16} />
+                          <span>Upload Photo</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleImageChange} 
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end space-x-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700"
+                      >
+                        Save Changes
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                    <div className="sm:col-span-1">
-                      <dt className="text-sm font-medium text-gray-500">Full name</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{user ? `${user.firstName} ${user.lastName}` : '-'}</dd>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <p className="text-pink-500 text-sm font-medium">First Name</p>
+                        <p className="font-medium text-gray-800">{user?.firstName}</p>
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <p className="text-pink-500 text-sm font-medium">Last Name</p>
+                        <p className="font-medium text-gray-800">{user?.lastName}</p>
+                      </div>
                     </div>
-                    <div className="sm:col-span-1">
-                      <dt className="text-sm font-medium text-gray-500">Email address</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{user?.email || '-'}</dd>
+                    
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <p className="text-pink-500 text-sm font-medium">Email</p>
+                      <p className="font-medium text-gray-800">{user?.email}</p>
                     </div>
-                    <div className="sm:col-span-1">
-                      <dt className="text-sm font-medium text-gray-500">Phone number</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{user?.phoneNumber || 'Not provided'}</dd>
+                    
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <p className="text-pink-500 text-sm font-medium">Phone Number</p>
+                      <p className="font-medium text-gray-800">{user?.phoneNumber || 'Not provided'}</p>
                     </div>
-                    <div className="sm:col-span-1">
-                      <dt className="text-sm font-medium text-gray-500">Account type</dt>
-                      <dd className="mt-1 text-sm text-gray-900 capitalize">{user?.role || '-'}</dd>
+                    
+                    <div className="flex justify-end pt-4">
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 shadow-md"
+                      >
+                        Edit Profile
+                      </button>
                     </div>
-                  </dl>
+                  </div>
                 )}
               </div>
-            </div>
+            )}
+            
+            {activeTab === 'events' && (
+              <div>
+                <h1 className="text-2xl font-bold text-purple-900 mb-6">My Upcoming Events</h1>
+                
+                <div className="space-y-4">
+                  {upcomingEvents.map(event => (
+                    <div key={event.id} className="border border-gray-200 rounded-lg p-4 hover:border-pink-300 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                          <h3 className="font-semibold text-lg text-purple-900">{event.name}</h3>
+                          <div className="flex items-center gap-2 text-gray-600 text-sm mt-2">
+                            <Calendar size={16} />
+                            <span>{event.date}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600 text-sm mt-1">
+                            <MapPin size={16} />
+                            <span>{event.location}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600 text-sm mt-1">
+                            <span className="font-medium">Time:</span>
+                            <span>{event.time}</span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">
+                            View Details
+                          </button>
+                          <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700">
+                            Get Tickets
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-8 text-center p-8 border border-dashed border-gray-300 rounded-lg">
+                  <h3 className="text-xl font-medium text-gray-700 mb-2">Discover More Events</h3>
+                  <p className="text-gray-600 mb-4">Find and register for upcoming events that match your interests</p>
+                  <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 shadow-md">
+                    Browse Events
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'tickets' && (
+              <div>
+                <h1 className="text-2xl font-bold text-purple-900 mb-6">My Tickets</h1>
+                
+                <div className="space-y-4">
+                  {upcomingEvents.map(event => (
+                    <div key={event.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
+                      <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div>
+                          <div className="text-sm font-medium text-pink-500 mb-1">E-TICKET</div>
+                          <h3 className="font-semibold text-lg text-purple-900">{event.name}</h3>
+                          <div className="mt-2 text-gray-600">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar size={16} />
+                              <span>{event.date}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                              <MapPin size={16} />
+                              <span>{event.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm mt-1">
+                              <span className="font-medium">Time:</span>
+                              <span>{event.time}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col justify-center items-end">
+                          <div className="text-lg font-bold text-purple-800">ADMIT ONE</div>
+                          <button className="mt-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 flex items-center gap-2">
+                            <Ticket size={16} />
+                            <span>View Ticket</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'settings' && (
+              <div>
+                <h1 className="text-2xl font-bold text-purple-900 mb-6">Account Settings</h1>
+                
+                <div className="space-y-6">
+                  <div className="border-b border-gray-200 pb-6">
+                    <h2 className="text-lg font-medium text-gray-800 mb-4">Notification Preferences</h2>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" className="h-5 w-5 rounded text-purple-600" defaultChecked />
+                          <span>Email notifications for event updates</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" className="h-5 w-5 rounded text-purple-600" defaultChecked />
+                          <span>Promotional emails and discounts</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" className="h-5 w-5 rounded text-purple-600" />
+                          <span>SMS notifications and reminders</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-b border-gray-200 pb-6">
+                    <h2 className="text-lg font-medium text-gray-800 mb-4">Password</h2>
+                    <button className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">
+                      Change Password
+                    </button>
+                  </div>
+                  
+                  <div>
+                    <h2 className="text-lg font-medium text-gray-800 mb-4">Delete Account</h2>
+                    <p className="text-gray-600 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
+                    <button className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
+                      Delete My Account
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Additional content based on role */}
-        {user?.role === 'admin' && (
-          <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Admin Controls</h3>
-              <button 
-                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <Settings className="h-4 w-4 mr-1" /> Manage Users
-              </button>
-            </div>
-            <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-              <p className="px-4 py-5 sm:px-6 text-sm text-gray-500">
-                As an administrator, you have access to additional controls and settings.
-              </p>
-            </div>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   );
 };
 
-// Wrap with ProtectedRoute
-export default function DashboardPage() {
-  return (
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  );
-}
+export default Dashboard;
