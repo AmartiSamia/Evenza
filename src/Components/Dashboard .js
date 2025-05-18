@@ -4,9 +4,11 @@ import NavBar from './NavBar/Navbar.js'; // Importing your NavBar component
 import { useNavigate } from 'react-router-dom';
 import Logo from '../Assets/EvenzaLogo.png'; // Import the logo
 
-const Dashboard = ({ onLogout, onBackToHome }) => {
+const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showAuthPage, setShowAuthPage] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     firstName: '',
@@ -98,16 +100,19 @@ const Dashboard = ({ onLogout, onBackToHome }) => {
     onLogout(); // Call the logout function from props
   };
 
+  const handleLogoClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen bg-purple-50">
       {/* Updated header to match App.js style */}
       <div className="bg-[#23195A] p-4">
-      {/* <div className="bg-gradient-to-r from-purple-900 to-purple-800 p-4"> */}
-
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
             <div
-              onClick={onBackToHome}
+              onClick={handleLogoClick}
               style={{ cursor: 'pointer' }}
               className="text-white text-4xl font-bold flex items-center m-0 pl-4 lg:static max-sm:ml-[-20px]"
             >

@@ -175,10 +175,9 @@ export default function App() {
           <Dashboard 
             user={user} 
             onLogout={handleLogout}
-            onBackToHome={() => {
-              setShowDashboard(false);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onNavLinkClick={handleNavLinkClick}
+            
+            
           />
         ) : showAuthPage ? (
           <section className="bg-[#221858] pt-16">

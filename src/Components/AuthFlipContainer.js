@@ -28,9 +28,6 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
   });
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://localhost:7169/api/Auth';
 
-  const ADMIN_SECRET_KEY = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY;
-  console.log("Admin key:", ADMIN_SECRET_KEY);
-  
   useEffect(() => {
     setIsFlipped(externalIsFlipped);
   }, [externalIsFlipped]);
@@ -71,50 +68,50 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
 
   const validatePassword = (password) => {
     const errors = [];
-    
     if (password.length < 8) errors.push("at least 8 characters");
     if (!/[A-Z]/.test(password)) errors.push("one uppercase letter");
     if (!/[a-z]/.test(password)) errors.push("one lowercase letter");
     if (!/[0-9]/.test(password)) errors.push("one number");
     if (!/[!@#$%^&*]/.test(password)) errors.push("one special character");
-    
     return errors;
   };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-        
+  
     try {
-      // Updated endpoint to match ASP.NET controller
       const response = await axios.post(`${API_BASE_URL}/login`, {
         email: loginData.email,
         password: loginData.password
       }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-      
+  
       console.log('Login response:', response);
-      
+  
       if (response.data.success) {
         toast.success("Login successful! Redirecting...");
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        window.location.href = '/dashboard';
+  
+        if (response.data.user.role === 'admin') {
+          window.location.href = '/admin/dashboard';
+        } else {
+          window.location.href = '/dashboard';
+        }
       } else {
-        // Handle success: false scenario
         toast.error(response.data.message || "Login failed");
       }
     } catch (error) {
       console.error('Login error details:', error.response?.data || error.message);
       let errorMessage = "Invalid credentials";
-      
+  
       if (error.response) {
-        errorMessage = error.response.data?.message || 
-                     (typeof error.response.data === 'string' ? error.response.data : errorMessage);
+        errorMessage = error.response.data?.message ||
+                       (typeof error.response.data === 'string' ? error.response.data : errorMessage);
       }
-      
+  
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -124,88 +121,80 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     
-   // Trim all inputs
-   const trimmedData = {
-    ...signupData,
-    firstName: signupData.firstName.trim(),
-    lastName: signupData.lastName.trim(),
-    email: signupData.email.trim(),
-    password: signupData.password.trim(),
-    confirmPassword: signupData.confirmPassword.trim()
+    // Trim all inputs
+    const trimmedData = {
+      ...signupData,
+      firstName: signupData.firstName.trim(),
+      lastName: signupData.lastName.trim(),
+      email: signupData.email.trim(),
+      password: signupData.password.trim(),
+      confirmPassword: signupData.confirmPassword.trim()
+    };
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Validate password strength
+    const passwordErrors = validatePassword(trimmedData.password);
+    if (passwordErrors.length > 0) {
+      toast.error(`Password must include ${passwordErrors.join(', ')}`);
+      return;
+    }
+
+    // Check if passwords match
+    if (trimmedData.password !== trimmedData.confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+
+    // Check terms agreement
+    if (!trimmedData.agreeTerms) {
+      toast.error("You must agree to the terms");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const payload = {
+        firstName: trimmedData.firstName,
+        lastName: trimmedData.lastName,
+        email: trimmedData.email,
+        phoneNumber: trimmedData.phoneNumber,
+        password: trimmedData.password,
+        confirmPassword: trimmedData.confirmPassword,
+        role: 'user',
+        agreeTerms: trimmedData.agreeTerms
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/register`, payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.data.success) {
+        toast.success('Account created successfully! Please login.');
+        setIsFlipped(false); // Flip to login after successful signup
+        setSignupData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phoneNumber: '',
+          password: '',
+          confirmPassword: '',
+          agreeTerms: false,
+          role: 'user'
+        });
+      } else {
+        toast.error(response.data.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Error during registration');
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedData.email)) {
-    toast.error("Please enter a valid email address");
-    return;
-  }
-
-  // Validate password strength
-  const passwordErrors = validatePassword(trimmedData.password);
-  if (passwordErrors.length > 0) {
-    toast.error(`Password must include ${passwordErrors.join(', ')}`);
-    return;
-  }
-
-  // Validate admin key if needed
-  if (trimmedData.role === 'admin' && adminKey !== ADMIN_SECRET_KEY) {
-    toast.error("Invalid admin secret key");
-    return;
-  }
-
-  // Check if passwords match
-  if (trimmedData.password !== trimmedData.confirmPassword) {
-    toast.error("Passwords don't match");
-    return;
-  }
-
-  // Check terms agreement
-  if (!trimmedData.agreeTerms) {
-    toast.error("You must agree to the terms");
-    return;
-  }
-  setIsLoading(true);
-  
-  try {
-    // Updated endpoint to match ASP.NET controller
-    const response = await axios.post(`${API_BASE_URL}/register`, {
-      firstName: trimmedData.firstName,
-      lastName: trimmedData.lastName,
-      email: trimmedData.email,
-      phoneNumber: trimmedData.phoneNumber || null,
-      password: trimmedData.password,
-      confirmPassword: trimmedData.confirmPassword,
-      role: trimmedData.role,
-      agreedToTerms: trimmedData.agreeTerms,
-      adminKey: trimmedData.role === 'admin' ? adminKey : null
-    });
-    
-    console.log('Signup response:', response);
-    
-    if (response.data.success) {
-      toast.success("Account created successfully!");
-      toggleFlip();
-      setLoginData({ email: trimmedData.email, password: '' });
-    } else {
-      // Handle success: false scenario
-      toast.error(response.data.message || "Registration failed");
-    }
-  } catch (error) {
-    console.error('Signup error:', error);
-    let errorMessage = "Signup failed. Please try again.";
-    
-    if (error.response) {
-      errorMessage = typeof error.response.data === 'string'
-        ? error.response.data
-        : error.response.data?.message || error.response.data?.error || errorMessage;
-    }
-    
-    toast.error(errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
 
   const inputStyles = {
     color: '#000',
@@ -328,7 +317,7 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
                       id="login-email"
                       name="email"
                       className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300"
-                      placeholder="your.email@example.com"
+                      placeholder="username@gmail.com"
                       value={loginData.email}
                       onChange={handleLoginChange}
                       style={inputStyles}
@@ -428,7 +417,7 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
                         id="firstName"
                         name="firstName"
                         className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300"
-                        placeholder="John"
+                        placeholder="FirstName"
                         value={signupData.firstName}
                         onChange={handleSignupChange}
                         style={inputStyles}
@@ -442,7 +431,7 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
                         id="lastName"
                         name="lastName"
                         className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300"
-                        placeholder="Doe"
+                        placeholder="LastName"
                         value={signupData.lastName}
                         onChange={handleSignupChange}
                         style={inputStyles}
@@ -462,7 +451,7 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
                           ? 'border-red-500' 
                           : 'border-gray-300'
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300`}
-                      placeholder="john.doe@example.com"
+                      placeholder="username@gmail.com"
                       value={signupData.email}
                       onChange={handleSignupChange}
                       style={inputStyles}
@@ -480,52 +469,12 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
                       id="phone"
                       name="phoneNumber"
                       className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300"
-                      placeholder="+1 (123) 456-7890"
+                      placeholder="PhoneNumber"
                       value={signupData.phoneNumber}
                       onChange={handleSignupChange}
                       style={inputStyles}
                     />
                   </div>
-
-                  <div className="mb-4 group">
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-                    <div className="relative">
-                      <select
-                        id="role"
-                        name="role"
-                        className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300 appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiAjdjE3Mjc3IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBvbHlsaW5lIHBvaW50cz0iNiA5IDEyIDE1IDE4IDkiPjwvcG9seWxpbmU+PC9zdmc+')] bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em]"
-                        value={signupData.role}
-                        onChange={handleSignupChange}
-                        style={inputStyles}
-                        required
-                      >
-                        <option value="user">Standard User</option>
-                        <option value="admin">Administrator</option>
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {signupData.role === 'admin' && (
-                    <div className="mb-4 group">
-                      <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700 mb-1">Admin Secret Key</label>
-                      <input
-                        type="password"
-                        id="adminKey"
-                        name="adminKey"
-                        className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 group-hover:border-pink-300"
-                        placeholder="Enter admin secret key"
-                        value={adminKey}
-                        onChange={handleAdminKeyChange}
-                        style={inputStyles}
-                        required={signupData.role === 'admin'}
-                      />
-                    </div>
-                  )}
 
                   <div className="mb-4 group">
                     <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
@@ -552,7 +501,6 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
                           <Eye className="text-gray-400 w-4 h-4 sm:w-5 sm:h-5 hover:text-gray-600 transition-colors" />
                         )}
                       </button>
-
                     </div>
                   </div>
 
@@ -639,6 +587,27 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
       
       {/* Global CSS */}
       <style jsx global>{`
+        input::placeholder {
+          color: #999999;
+          opacity: 1;
+        }  
+        /* For better browser support */
+        input::-webkit-input-placeholder {
+          color: #999999;
+          opacity: 1;
+        }
+        input::-moz-placeholder {
+          color: #999999;
+          opacity: 1;
+        }
+        input:-ms-input-placeholder {
+          color: #999999;
+          opacity: 1;
+        }
+        input::-ms-input-placeholder {
+          color: #999999;
+          opacity: 1;
+        }
         .perspective-300 {
           perspective: 3000px;
         }
