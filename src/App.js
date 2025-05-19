@@ -57,10 +57,16 @@ export default function App() {
   };
 
   const handleNavLinkClick = (id) => {
+    console.log(`Nav link clicked for: ${id}`); // Debug logging
     setShowAuthPage(false);
     setShowDashboard(false);
     const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: "smooth" });
+    if (element) {
+      console.log(`Found element with id ${id}, scrolling to it`); // Debug logging
+      element.scrollIntoView({ behavior: "smooth" });
+    } else {
+      console.log(`Element with id ${id} not found`); // Debug logging
+    }
     if (isMenuOpen) setMenuOpen(false);
   };
 
@@ -87,6 +93,35 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handle Get Tickets button click
+  const handleGetTicketsClick = () => {
+    console.log('Get Tickets clicked in App component!'); // Enhanced debug logging
+    
+    // Make sure we're on the main page (not auth or dashboard)
+    setShowAuthPage(false);
+    setShowDashboard(false);
+    
+    // Use setTimeout to ensure state updates have been processed
+    setTimeout(() => {
+      // Directly scroll to events section
+      const eventsSection = document.getElementById('events');
+      if (eventsSection) {
+        console.log('Found events section, scrolling to it');
+        eventsSection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        console.log('Events section not found by ID, trying alternate methods');
+        // Use query selector as fallback
+        const eventsSectionAlt = document.querySelector('section[id="events"]');
+        if (eventsSectionAlt) {
+          console.log('Found events section by querySelector, scrolling to it');
+          eventsSectionAlt.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          console.log('Could not find events section');
+        }
+      }
+    }, 100);
+  };
+  
   useEffect(() => {
     const handleScroll = () => {
       if (!isMenuOpen) {
@@ -176,8 +211,6 @@ export default function App() {
             user={user} 
             onLogout={handleLogout}
             onNavLinkClick={handleNavLinkClick}
-            
-            
           />
         ) : showAuthPage ? (
           <section className="bg-[#221858] pt-16">
@@ -191,7 +224,7 @@ export default function App() {
         ) : (
           <>
             <main>
-              <Accroche />
+              <Accroche onGetTicketsClick={handleGetTicketsClick} />
             </main>
             <section id="about" className="bg-[#F8F6FF]">
               <About />
@@ -200,7 +233,12 @@ export default function App() {
               <EventFeatures />
             </section>
             <section id="events" className="bg-[#221858]">
-              <Events />
+              <Events 
+                isAuthenticated={isAuthenticated}
+                user={user}
+                onLoginClick={() => toggleAuthPage(true)}
+                onSignupClick={() => toggleAuthPage(false)}
+              />
             </section>
             <section className="bg-[#FFFFFF]">
               <StatsCards className="bg-[#FFFFFF]"/>

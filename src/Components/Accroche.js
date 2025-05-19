@@ -1,7 +1,34 @@
 import React from 'react';
 import Man from '../Assets/AccrocheSection/manSmiling.png';
 
-const Accroche = () => {
+const Accroche = ({ onGetTicketsClick }) => {
+  const handleGetTicketsClick = (e) => {
+    // Prevent default button behavior
+    e.preventDefault();
+    
+    // Explicitly log for debugging
+    console.log('Get Tickets button clicked in Accroche component');
+    
+    if (onGetTicketsClick && typeof onGetTicketsClick === 'function') {
+      // Call the prop function directly if available
+      onGetTicketsClick();
+    } else {
+      // Fallback if no prop is passed - looking for the events section
+      const eventsSection = document.getElementById('events');
+      if (eventsSection) {
+        eventsSection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        // Alternative fallback - look for any element containing the Events component
+        const eventsSectionAlt = document.querySelector('section[id="events"]') || 
+                                 document.querySelector('[id*="event"]') ||
+                                 document.querySelector('section:has([class*="event"])');
+        if (eventsSectionAlt) {
+          eventsSectionAlt.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+  };
+
   return ( 
     <section className="bg-[#271A5F] relative w-full overflow-hidden flex flex-col max-sm:h-auto sm:h-[650px] lg:mt-[50px] sm:mt-[50px] max-sm:mt-[5px]">
       {/* Background decorative bubble elements */}
@@ -76,9 +103,13 @@ const Accroche = () => {
               Register with <span className="text-pink-400 font-semibold">Evenza</span> for Seamless Events!
             </p>
 
-            {/* Button container with proper mobile centering */}
-            <div className=" max-sm:justify-center p-[2px] rounded-full bg-gradient-to-r from-pink-500 to-purple-600 inline-block ">
-              <button className="bg-[#271A5F] text-white rounded-full py-3 max-sm:text-[14px] max-sm:px-6 sm:px-6 lg:px-10 hover:bg-white hover:text-[#271A5F] transition-colors sm:w-max lg:w-max">
+            {/* Fixed button container and button with improved event handling */}
+            <div className="max-sm:justify-center p-[2px] rounded-full bg-gradient-to-r from-pink-500 to-purple-600 inline-block">
+              <button 
+                type="button"
+                onClick={handleGetTicketsClick}
+                className="bg-[#271A5F] text-white rounded-full py-3 max-sm:text-[14px] max-sm:px-6 sm:px-6 lg:px-10 hover:bg-white hover:text-[#271A5F] transition-colors sm:w-max lg:w-max cursor-pointer"
+              >
                 Get Tickets
               </button>
             </div>
@@ -86,8 +117,8 @@ const Accroche = () => {
         </div>
 
         {/* Right content - image */}
-        <div className="max-sm:order-2 max-sm:w-full lg:ml-[90px] max-sm:h-[250px] sm:w-[500px] lg:w-1/2 relative bg-gradient-to-r from-pink-500 to-purple-600 rounded-tl-[80px] ">
-          <div className="h-full w-full relative ">
+        <div className="max-sm:order-2 max-sm:w-full lg:ml-[90px] max-sm:h-[250px] sm:w-[500px] lg:w-1/2 relative bg-gradient-to-r from-pink-500 to-purple-600 rounded-tl-[80px]">
+          <div className="h-full w-full relative">
             <img 
               src={Man} 
               alt="Speaker at webinar" 

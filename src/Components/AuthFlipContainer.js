@@ -9,7 +9,7 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [adminKey, setAdminKey] = useState('');
+
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -62,9 +62,6 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
     }));
   };
 
-  const handleAdminKeyChange = (e) => {
-    setAdminKey(e.target.value);
-  };
 
   const validatePassword = (password) => {
     const errors = [];
@@ -79,44 +76,46 @@ export default function EnhancedAuthFlipContainer({ isFlipped: externalIsFlipped
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, {
-        email: loginData.email,
-        password: loginData.password
-      }, {
-        headers: { 'Content-Type': 'application/json' }
-      });
-  
-      console.log('Login response:', response);
-  
-      if (response.data.success) {
-        toast.success("Login successful! Redirecting...");
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-  
-        if (response.data.user.role === 'admin') {
-          window.location.href = '/admin/dashboard';
-        } else {
-          window.location.href = '/dashboard';
-        }
+        const response = await axios.post(`${API_BASE_URL}/login`, {
+            email: loginData.email,
+            password: loginData.password
+        }, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        console.log('Login response:', response);
+        if (response.data.success) {
+          toast.success("Login successful! Redirecting...");
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+          // Check the role and redirect accordingly
+          if (response.data.user.role === 'admin') {
+              window.location.href = '/admin/dashboard'; // Redirect to admin dashboard
+          } else {
+              window.location.href = '/dashboard'; // Redirect to user dashboard
+          }
       } else {
-        toast.error(response.data.message || "Login failed");
+          toast.error(response.data.message || "Login failed");
       }
+      
     } catch (error) {
-      console.error('Login error details:', error.response?.data || error.message);
-      let errorMessage = "Invalid credentials";
-  
-      if (error.response) {
-        errorMessage = error.response.data?.message ||
-                       (typeof error.response.data === 'string' ? error.response.data : errorMessage);
-      }
-  
-      toast.error(errorMessage);
+        console.error('Login error details:', error.response?.data || error.message);
+        let errorMessage = "Invalid credentials";
+
+        if (error.response) {
+            errorMessage = error.response.data?.message ||
+                (typeof error.response.data === 'string' ? error.response.data : errorMessage);
+        }
+
+        toast.error(errorMessage);
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
+
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
