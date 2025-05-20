@@ -223,9 +223,9 @@ export default function App() {
           </section>
         ) : (
           <>
-            <main>
-              <Accroche onGetTicketsClick={handleGetTicketsClick} />
-            </main>
+ <main>
+  <Accroche onGetTicketsClick={handleGetTicketsClick} />
+</main>
             <section id="about" className="bg-[#F8F6FF]">
               <About />
             </section>

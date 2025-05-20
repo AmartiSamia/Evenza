@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { UserCircle, Calendar, MapPin, Ticket, Settings, Camera, LogOut } from 'lucide-react';
-import NavBar from './NavBar/Navbar.js'; // Importing your NavBar component
+import NavBar from './NavBar/Navbar.js';
 import { useNavigate } from 'react-router-dom';
-import Logo from '../Assets/EvenzaLogo.png'; // Import the logo
+import Logo from '../Assets/EvenzaLogo.png';
 
-const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
+const Dashboard = ({ onLogout, onNavLinkClick, onBackToHome }) => {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
-  const [showAuthPage, setShowAuthPage] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [registrations, setRegistrations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -17,32 +18,16 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
     phoneNumber: '',
     profilePicture: ''
   });
-  
-  const [upcomingEvents, setUpcomingEvents] = useState([
-    {
-      id: 1,
-      name: "Leadership Conference 2025",
-      date: "February 15, 2025",
-      location: "135 W. 46rd Street, New York",
-      time: "9:15am - 2:15pm"
-    },
-    {
-      id: 2,
-      name: "Digital Marketing Summit",
-      date: "March 22, 2025",
-      location: "135 W. 46rd Street, New York",
-      time: "10:00am - 4:00pm"
-    }
-  ]);
 
+  // Fetch user data from localStorage
   useEffect(() => {
-    // Load user data from localStorage or API
     const userData = JSON.parse(localStorage.getItem('user')) || {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
       phoneNumber: '(555) 123-4567',
-      profilePicture: ''
+      profilePicture: '',
+      id: '00000000-0000-0000-0000-000000000000' // Default ID for testing
     };
     
     setUser(userData);
@@ -53,7 +38,131 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
       phoneNumber: userData.phoneNumber || '',
       profilePicture: userData.profilePicture || ''
     });
+    
+    // Immediately call fetchRegistrations with the user ID
+    fetchRegistrations(userData.id);
   }, []);
+
+  const fetchRegistrations = async (userId) => {
+    setLoading(true);
+    try {
+      // Attempt to fetch from API first
+      const apiUrl = `https://localhost:7169/api/Registrations/user/${userId}`;
+      console.log('Fetching registrations from:', apiUrl);
+      
+      try {
+        const response = await fetch(apiUrl);
+        
+        if (response.ok) {
+          let data = await response.json();
+          console.log('API returned registrations:', data);
+          
+          // If events are not embedded in the registration, fetch them
+          if (Array.isArray(data) && data.length > 0 && !data[0].event) {
+            const registrationsWithEvents = await Promise.all(
+              data.map(async (registration) => {
+                if (registration.eventId) {
+                  try {
+                    const eventResponse = await fetch(`https://localhost:7169/api/Events/${registration.eventId}`);
+                    if (eventResponse.ok) {
+                      const eventData = await eventResponse.json();
+                      return { ...registration, event: eventData };
+                    }
+                  } catch (error) {
+                    console.error(`Failed to fetch event for registration ${registration.id}:`, error);
+                  }
+                }
+                return registration;
+              })
+            );
+            data = registrationsWithEvents;
+          }
+          
+          setRegistrations(data);
+          setError(null);
+          setLoading(false);
+          return;
+        } else {
+          console.warn('API returned non-OK status:', response.status);
+        }
+      } catch (err) {
+        console.warn('API fetch error:', err);
+      }
+      
+      // Fall back to mock data if API fails
+      console.log('Using mock registration data');
+      const mockRegistrations = [
+        {
+          id: "1",
+          registrationDate: new Date().toISOString(),
+          eventId: "e1",
+          firstName: user?.firstName || "John",
+          lastName: user?.lastName || "Doe",
+          event: {
+            id: "e1",
+            name: "Leadership Conference 2025",
+            startTime: "2025-02-15T09:15:00",
+            endTime: "2025-02-15T14:15:00",
+            location: "135 W. 46rd Street, New York"
+          }
+        },
+        {
+          id: "2",
+          registrationDate: new Date().toISOString(),
+          eventId: "e2",
+          firstName: user?.firstName || "John",
+          lastName: user?.lastName || "Doe",
+          event: {
+            id: "e2",
+            name: "Digital Marketing Summit",
+            startTime: "2025-03-22T10:00:00",
+            endTime: "2025-03-22T16:00:00",
+            location: "135 W. 46rd Street, New York"
+          }
+        }
+      ];
+      setRegistrations(mockRegistrations);
+      setError(null);
+    } catch (err) {
+      console.error('Error in fetchRegistrations:', err);
+      setError('Failed to load your registrations. Please try again later.');
+      
+      // Set up fallback mock data as last resort
+      const mockRegistrations = [
+        {
+          id: "1",
+          registrationDate: new Date().toISOString(),
+          eventId: "e1",
+          firstName: user?.firstName || "John",
+          lastName: user?.lastName || "Doe",
+          event: {
+            id: "e1",
+            name: "Leadership Conference 2025",
+            startTime: "2025-02-15T09:15:00",
+            endTime: "2025-02-15T14:15:00",
+            location: "135 W. 46rd Street, New York"
+          }
+        },
+        {
+          id: "2",
+          registrationDate: new Date().toISOString(),
+          eventId: "e2",
+          firstName: user?.firstName || "John",
+          lastName: user?.lastName || "Doe",
+          event: {
+            id: "e2",
+            name: "Digital Marketing Summit",
+            startTime: "2025-03-22T10:00:00",
+            endTime: "2025-03-22T16:00:00",
+            location: "135 W. 46rd Street, New York"
+          }
+        }
+      ];
+      setRegistrations(mockRegistrations);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,6 +195,32 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
     }
   };
 
+  // Format date and time for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Date unavailable';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date unavailable';
+    }
+  };
+
+  const formatTime = (startTimeString, endTimeString) => {
+    if (!startTimeString || !endTimeString) return 'Time unavailable';
+    try {
+      const startTime = new Date(startTimeString);
+      const endTime = new Date(endTimeString);
+      
+      const formatOptions = { hour: 'numeric', minute: 'numeric', hour12: true };
+      return `${startTime.toLocaleTimeString('en-US', formatOptions)} - ${endTime.toLocaleTimeString('en-US', formatOptions)}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Time unavailable';
+    }
+  };
+
   // NavBar handlers
   const handleNavLinkClick = (section) => {
     if (section === "home") {
@@ -105,9 +240,84 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
     window.location.href = '/';
   };
 
+  // Safely get event data with fallbacks
+  const getEventData = (registration) => {
+    if (!registration) return {
+      name: 'Event name unavailable',
+      startTime: null,
+      endTime: null,
+      location: 'No location specified'
+    };
+    
+    const event = registration.event || {};
+    
+    return {
+      name: event.name || 'Event name unavailable',
+      startTime: event.startTime || null,
+      endTime: event.endTime || null,
+      location: event.location || 'No location specified'
+    };
+  };
+
+  // Loading and error states for event listings
+  const renderEventsList = () => {
+    if (loading) {
+      return <div className="text-center py-8">Loading your events...</div>;
+    }
+    
+    if (error) {
+      return <div className="text-center py-8 text-red-500">{error}</div>;
+    }
+    
+    if (registrations.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-600">
+          <p className="mb-4">You haven't registered for any events yet.</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="space-y-4">
+        {registrations.map((registration) => {
+          const eventData = getEventData(registration);
+          
+          return (
+            <div key={registration.id} className="border border-gray-200 rounded-lg p-4 hover:border-pink-300 transition-colors">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h3 className="font-semibold text-lg text-purple-900">{eventData.name}</h3>
+                  <div className="flex items-center gap-2 text-gray-600 text-sm mt-2">
+                    <Calendar size={16} />
+                    <span>{formatDate(eventData.startTime)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600 text-sm mt-1">
+                    <MapPin size={16} />
+                    <span>{eventData.location}</span>
+                  </div>
+                  {eventData.startTime && eventData.endTime && (
+                    <div className="flex items-center gap-2 text-gray-600 text-sm mt-1">
+                      <span className="font-medium">Time:</span>
+                      <span>{formatTime(eventData.startTime, eventData.endTime)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <button className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-purple-50">
-      {/* Updated header to match App.js style */}
+      {/* Header */}
       <div className="bg-[#23195A] p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
@@ -347,38 +557,7 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
             {activeTab === 'events' && (
               <div>
                 <h1 className="text-2xl font-bold text-purple-900 mb-6">My Upcoming Events</h1>
-                
-                <div className="space-y-4">
-                  {upcomingEvents.map(event => (
-                    <div key={event.id} className="border border-gray-200 rounded-lg p-4 hover:border-pink-300 transition-colors">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                          <h3 className="font-semibold text-lg text-purple-900">{event.name}</h3>
-                          <div className="flex items-center gap-2 text-gray-600 text-sm mt-2">
-                            <Calendar size={16} />
-                            <span>{event.date}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-600 text-sm mt-1">
-                            <MapPin size={16} />
-                            <span>{event.location}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-600 text-sm mt-1">
-                            <span className="font-medium">Time:</span>
-                            <span>{event.time}</span>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">
-                            View Details
-                          </button>
-                          <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700">
-                            Get Tickets
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {renderEventsList()}
                 
                 <div className="mt-8 text-center p-8 border border-dashed border-gray-300 rounded-lg">
                   <h3 className="text-xl font-medium text-gray-700 mb-2">Discover More Events</h3>
@@ -394,39 +573,64 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
               <div>
                 <h1 className="text-2xl font-bold text-purple-900 mb-6">My Tickets</h1>
                 
-                <div className="space-y-4">
-                  {upcomingEvents.map(event => (
-                    <div key={event.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div>
-                          <div className="text-sm font-medium text-pink-500 mb-1">E-TICKET</div>
-                          <h3 className="font-semibold text-lg text-purple-900">{event.name}</h3>
-                          <div className="mt-2 text-gray-600">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Calendar size={16} />
-                              <span>{event.date}</span>
+                {loading && <div className="text-center py-8">Loading your tickets...</div>}
+                
+                {error && <div className="text-center py-8 text-red-500">{error}</div>}
+                
+                {!loading && !error && registrations.length === 0 && (
+                  <div className="text-center py-8 text-gray-600">
+                    <p className="mb-4">You don't have any tickets yet.</p>
+                    <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 shadow-md">
+                      Browse Events
+                    </button>
+                  </div>
+                )}
+                
+                {!loading && !error && registrations.length > 0 && (
+                  <div className="space-y-4">
+                    {registrations.map(registration => {
+                      const eventData = getEventData(registration);
+                      
+                      return (
+                        <div key={registration.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
+                          <div className="flex flex-col md:flex-row justify-between gap-4">
+                            <div>
+                              <div className="text-sm font-medium text-pink-500 mb-1">E-TICKET</div>
+                              <h3 className="font-semibold text-lg text-purple-900">{eventData.name}</h3>
+                              <div className="mt-2 text-gray-600">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Calendar size={16} />
+                                  <span>{formatDate(eventData.startTime)}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm mt-1">
+                                  <MapPin size={16} />
+                                  <span>{eventData.location}</span>
+                                </div>
+                                {eventData.startTime && eventData.endTime && (
+                                  <div className="flex items-center gap-2 text-sm mt-1">
+                                    <span className="font-medium">Time:</span>
+                                    <span>{formatTime(eventData.startTime, eventData.endTime)}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-2 text-sm mt-1">
+                                  <span className="font-medium">Registered on:</span>
+                                  <span>{formatDate(registration.registrationDate)}</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm mt-1">
-                              <MapPin size={16} />
-                              <span>{event.location}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm mt-1">
-                              <span className="font-medium">Time:</span>
-                              <span>{event.time}</span>
+                            <div className="flex flex-col justify-center items-end">
+                              <div className="text-lg font-bold text-purple-800">ADMIT ONE</div>
+                              <button className="mt-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 flex items-center gap-2">
+                                <Ticket size={16} />
+                                <span>View Ticket</span>
+                              </button>
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col justify-center items-end">
-                          <div className="text-lg font-bold text-purple-800">ADMIT ONE</div>
-                          <button className="mt-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 flex items-center gap-2">
-                            <Ticket size={16} />
-                            <span>View Ticket</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
             
@@ -435,30 +639,6 @@ const Dashboard = ({ onLogout, onNavLinkClick,onBackToHome }) => {
                 <h1 className="text-2xl font-bold text-purple-900 mb-6">Account Settings</h1>
                 
                 <div className="space-y-6">
-                  <div className="border-b border-gray-200 pb-6">
-                    <h2 className="text-lg font-medium text-gray-800 mb-4">Notification Preferences</h2>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" className="h-5 w-5 rounded text-purple-600" defaultChecked />
-                          <span>Email notifications for event updates</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" className="h-5 w-5 rounded text-purple-600" defaultChecked />
-                          <span>Promotional emails and discounts</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" className="h-5 w-5 rounded text-purple-600" />
-                          <span>SMS notifications and reminders</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  
                   <div className="border-b border-gray-200 pb-6">
                     <h2 className="text-lg font-medium text-gray-800 mb-4">Password</h2>
                     <button className="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200">

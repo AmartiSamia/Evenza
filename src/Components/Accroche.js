@@ -2,31 +2,20 @@ import React from 'react';
 import Man from '../Assets/AccrocheSection/manSmiling.png';
 
 const Accroche = ({ onGetTicketsClick }) => {
-  const handleGetTicketsClick = (e) => {
-    // Prevent default button behavior
-    e.preventDefault();
-    
-    // Explicitly log for debugging
-    console.log('Get Tickets button clicked in Accroche component');
-    
-    if (onGetTicketsClick && typeof onGetTicketsClick === 'function') {
-      // Call the prop function directly if available
-      onGetTicketsClick();
-    } else {
-      // Fallback if no prop is passed - looking for the events section
-      const eventsSection = document.getElementById('events');
-      if (eventsSection) {
-        eventsSection.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        // Alternative fallback - look for any element containing the Events component
-        const eventsSectionAlt = document.querySelector('section[id="events"]') || 
-                                 document.querySelector('[id*="event"]') ||
-                                 document.querySelector('section:has([class*="event"])');
-        if (eventsSectionAlt) {
-          eventsSectionAlt.scrollIntoView({ behavior: 'smooth' });
-        }
-      }
+ const handleGetTicketsClick = (e) => {
+  e.preventDefault();
+  console.log('Get Tickets button clicked in Accroche component');
+  
+  if (onGetTicketsClick && typeof onGetTicketsClick === 'function') {
+    onGetTicketsClick(); // Let parent component handle the logic
+  } else {
+    // Fallback scrolling logic (no state changes)
+    const eventsSection = document.getElementById('events');
+    if (eventsSection) {
+      eventsSection.scrollIntoView({ behavior: 'smooth' });
     }
+  }
+
   };
 
   return ( 

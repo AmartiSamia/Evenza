@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Logo from '../Assets/EvenzaLogo.png';
 import {
   Calendar,
   Users,
@@ -8,10 +9,13 @@ import {
   Plus,
   Search,
   Bell,
-  Settings,
   LogOut,
   ChevronDown,
-  CheckCircle
+  CheckCircle,
+  User,
+  ClipboardList,
+  X,
+  Check
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -20,11 +24,16 @@ const AdminDashboard = () => {
   const [notificationCount] = useState(3);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [events, setEvents] = useState([]);
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminErrors, setAdminErrors] = useState({});
   const [editing, setEditing] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
+  const [registrationCount, setRegistrationCount] = useState(0);
+  const [editingAdmin, setEditingAdmin] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
 
   // Event form state
   const [form, setForm] = useState({
@@ -32,8 +41,7 @@ const AdminDashboard = () => {
     name: "",
     location: "",
     startTime: "",
-    endTime: "",
-    status: "upcoming"
+    endTime: ""
   });
 
   // Admin creation form state
@@ -87,12 +95,26 @@ const AdminDashboard = () => {
       console.error('Failed to fetch admin users:', error);
     }
   };
+  
+  // Fetch registrations from API
+  const fetchRegistrations = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/registrations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRegistrations(res.data);
+      setRegistrationCount(res.data.length);
+    } catch (error) {
+      console.error('Failed to fetch registrations:', error);
+    }
+  };
 
   // Initial fetches
   useEffect(() => {
     fetchEvents();
     fetchAllUsers();
     fetchAdminUsers();
+    fetchRegistrations();
   }, []);
 
   // Fetch users based on active tab
@@ -101,6 +123,8 @@ const AdminDashboard = () => {
       fetchAdminUsers();
     } else if (activeTab === "all-users") {
       fetchAllUsers();
+    } else if (activeTab === "registrations") {
+      fetchRegistrations();
     }
   }, [activeTab]);
   
@@ -128,8 +152,7 @@ const AdminDashboard = () => {
       name: "",
       location: "",
       startTime: "",
-      endTime: "",
-      status: "upcoming"
+      endTime: ""
     });
     setEditing(false);
     setSelectedEvent(null);
@@ -174,8 +197,7 @@ const AdminDashboard = () => {
       name: event.name,
       location: event.location,
       startTime: event.startTime ? event.startTime.slice(0, 16) : '',
-      endTime: event.endTime ? event.endTime.slice(0, 16) : '',
-      status: event.status || "upcoming"
+      endTime: event.endTime ? event.endTime.slice(0, 16) : ''
     });
     setEditing(true);
     setActiveTab('events');
@@ -197,7 +219,39 @@ const AdminDashboard = () => {
     }
   };
 
-  // Admin creation submit handler
+  // Delete admin with confirmation
+  const handleDeleteAdmin = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this admin?')) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchAdminUsers();
+      alert('Admin deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete admin:', error);
+      alert('Failed to delete admin');
+    }
+  };
+
+  // Edit admin - populate form and enable editing
+  const handleEditAdmin = (admin) => {
+    setSelectedAdmin(admin);
+    setEditingAdmin(true);
+    setAdminForm({
+      email: admin.email,
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      phoneNumber: admin.phoneNumber || '',
+      password: '',
+      confirmPassword: '',
+      role: 'admin',
+      agreedToTerms: true
+    });
+  };
+
+  // Admin creation/update submit handler
   const handleAdminSubmit = async (e) => {
     e.preventDefault();
   
@@ -205,45 +259,56 @@ const AdminDashboard = () => {
     if (!adminForm.email) errors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(adminForm.email)) errors.email = "Invalid email format";
   
-    if (!adminForm.password) errors.password = "Password is required";
-    else if (adminForm.password.length < 6) errors.password = "Password must be at least 6 characters";
-  
-    if (adminForm.password !== adminForm.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
-    }
-  
     if (!adminForm.firstName) errors.firstName = "First name is required";
     if (!adminForm.lastName) errors.lastName = "Last name is required";
   
-    if (!adminForm.phoneNumber) {
-      errors.phoneNumber = "Invalid phone number";
+    if (!editingAdmin) {
+      if (!adminForm.password) errors.password = "Password is required";
+      else if (adminForm.password.length < 6) errors.password = "Password must be at least 6 characters";
+  
+      if (adminForm.password !== adminForm.confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+      }
     }
   
     if (Object.keys(errors).length > 0) {
       setAdminErrors(errors);
       return;
     }
+
     try {
       setAdminErrors({});
     
       const payload = {
         email: adminForm.email.trim(),
-        password: adminForm.password,
-        confirmPassword: adminForm.confirmPassword,
         firstName: adminForm.firstName.trim(),
         lastName: adminForm.lastName.trim(),
         phoneNumber: adminForm.phoneNumber ? adminForm.phoneNumber.trim() : "",
-        role: "admin",
-        agreedToTerms: true,
+        role: "admin"
       };
-    
-      const response = await axios.post(`${API_BASE_URL}/Auth/register-admin`, payload, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-    
-      if (response.data.success || response.status === 201) {
-        alert(`Admin ${payload.firstName} ${payload.lastName} created successfully!`);
-    
+
+      // Only include password fields if creating new admin or changing password
+      if (!editingAdmin || adminForm.password) {
+        payload.password = adminForm.password;
+        if (!editingAdmin) {
+          payload.confirmPassword = adminForm.confirmPassword;
+        }
+      }
+
+      let response;
+      if (editingAdmin) {
+        response = await axios.put(`${API_BASE_URL}/users/${selectedAdmin.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+      } else {
+        response = await axios.post(`${API_BASE_URL}/Auth/register-admin`, payload, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (response.data.success || response.status === 200 || response.status === 201) {
+        alert(`Admin ${editingAdmin ? 'updated' : 'created'} successfully!`);
+        
         setAdminForm({
           email: '',
           password: '',
@@ -254,34 +319,24 @@ const AdminDashboard = () => {
           role: 'admin',
           agreedToTerms: true
         });
-    
+        
+        setEditingAdmin(false);
+        setSelectedAdmin(null);
         await fetchAdminUsers();
       } else {
-        alert(response.data.message || "Failed to create admin");
+        alert(response.data.message || `Failed to ${editingAdmin ? 'update' : 'create'} admin`);
       }
     } catch (error) {
-      console.error("Error creating admin:", error.response?.data || error.message);
-      alert("Error creating admin account. Check console.");
-    }
-  };
-
-  // Get color class for event status
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-500";
-      case "upcoming":
-        return "bg-blue-500";
-      case "completed":
-        return "bg-gray-500";
-      default:
-        return "bg-blue-500";
+      console.error(`Error ${editingAdmin ? 'updating' : 'creating'} admin:`, error.response?.data || error.message);
+      alert(`Error ${editingAdmin ? 'updating' : 'creating'} admin account. Check console.`);
     }
   };
 
   // Logout handler
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
     window.location.href = '/';
   };
 
@@ -297,21 +352,20 @@ const AdminDashboard = () => {
     <div className="flex h-screen bg-slate-100">
       {/* Sidebar */}
       <div className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-indigo-900 text-white transition-all duration-300 flex flex-col`}>
-        {/* Logo */}
-        <div className="p-4 flex items-center justify-center">
-          {sidebarCollapsed ? (
-            <div className="text-2xl font-bold text-white">EV</div>
-          ) : (
-            <div className="text-2xl font-bold flex items-center">
-              <svg viewBox="0 0 24 24" className="h-8 w-8 mr-2 text-pink-500" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-              </svg>
-              <span className="text-white">
-                EV<span className="text-pink-500">ENZA</span>
-              </span>
-            </div>
-          )}
-        </div>
+    {/* Logo */}
+     <div className="flex items-center">
+            <div
+              id="logo"
+              // onClick={handleLogoClick}
+              style={{ cursor: 'pointer' }}
+              className="text-white mt-[11px] ml-[60px] text-4xl font-bold flex items-center m-0 pl-4 lg:static max-sm:ml-[-20px]"
+            >
+              <img
+                src={Logo}
+                alt="Logo"
+                className="pl-[20px] h-[38px] object-contain"
+              />
+            </div></div>
 
         {/* Navigation Links */}
         <div className="flex-1 py-4">
@@ -336,6 +390,16 @@ const AdminDashboard = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab("registrations")}
+            className={`flex items-center w-full px-4 py-3 ${
+              activeTab === "registrations" ? "bg-indigo-800 border-l-4 border-pink-500" : "hover:bg-indigo-800"
+            }`}
+          >
+            <ClipboardList size={20} className="min-w-5" />
+            {!sidebarCollapsed && <span className="ml-3">Registrations</span>}
+          </button>
+
+          <button
             onClick={() => setActiveTab("all-users")}
             className={`flex items-center w-full px-4 py-3 ${
               activeTab === "all-users" ? "bg-indigo-800 border-l-4 border-pink-500" : "hover:bg-indigo-800"
@@ -346,33 +410,13 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => setActiveTab("users")}
-            className={`flex items-center w-full px-4 py-3 ${
-              activeTab === "users" ? "bg-indigo-800 border-l-4 border-pink-500" : "hover:bg-indigo-800"
-            }`}
-          >
-            <Users size={20} className="min-w-5" />
-            {!sidebarCollapsed && <span className="ml-3">All Admins</span>}
-          </button>
-
-          <button
             onClick={() => setActiveTab("admins")}
             className={`flex items-center w-full px-4 py-3 ${
               activeTab === "admins" ? "bg-indigo-800 border-l-4 border-pink-500" : "hover:bg-indigo-800"
             }`}
           >
-            <Shield size={20} className="min-w-5" />
+            <User size={20} className="min-w-5" />
             {!sidebarCollapsed && <span className="ml-3">Administrators</span>}
-          </button>
-
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`flex items-center w-full px-4 py-3 ${
-              activeTab === "settings" ? "bg-indigo-800 border-l-4 border-pink-500" : "hover:bg-indigo-800"
-            }`}
-          >
-            <Settings size={20} className="min-w-5" />
-            {!sidebarCollapsed && <span className="ml-3">Settings</span>}
           </button>
         </div>
 
@@ -397,10 +441,9 @@ const AdminDashboard = () => {
               <h1 className="text-xl font-semibold text-gray-800">
                 {activeTab === "dashboard" && "Dashboard Overview"}
                 {activeTab === "events" && "Event Management"}
-                {activeTab === "users" && "All Administrators"}
                 {activeTab === "admins" && "Administrator Management"}
-                {activeTab === "settings" && "Platform Settings"}
                 {activeTab === "all-users" && "All Users"}
+                {activeTab === "registrations" && "Registrations Management"}
               </h1>
             </div>
 
@@ -424,11 +467,11 @@ const AdminDashboard = () => {
 
               <div className="flex items-center space-x-3">
                 <div className="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                  A
+                  {localStorage.getItem('username')?.charAt(0) || 'A'}
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-800">Admin User</p>
-                  <p className="text-xs text-gray-500">admin@evenza.com</p>
+                  <p className="text-sm font-medium text-gray-800">{localStorage.getItem('username') || 'Admin'}</p>
+                  <p className="text-xs text-gray-500">{localStorage.getItem('email') || 'admin@evenza.com'}</p>
                 </div>
               </div>
 
@@ -441,29 +484,14 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Tab line (optional tabs within main tabs, you can add more) */}
-          <div className="flex px-6">
-            {activeTab === "dashboard" && (
-              <>
-                <button className="py-3 px-4 border-b-2 border-pink-500 text-pink-500 font-medium">
-                  Overview
-                </button>
-                <button className="py-3 px-4 text-gray-500 hover:text-gray-700">Analytics</button>
-                <button className="py-3 px-4 text-gray-500 hover:text-gray-700">Reports</button>
-              </>
-            )}
-
-            {activeTab === "events" && (
-              <>
-                <button className="py-3 px-4 border-b-2 border-pink-500 text-pink-500 font-medium">
-                  All Events
-                </button>
-                <button className="py-3 px-4 text-gray-500 hover:text-gray-700">Active</button>
-                <button className="py-3 px-4 text-gray-500 hover:text-gray-700">Upcoming</button>
-                <button className="py-3 px-4 text-gray-500 hover:text-gray-700">Completed</button>
-              </>
-            )}
-          </div>
+          {/* Tab line */}
+          {activeTab === "events" && (
+            <div className="flex px-6">
+              <button className="py-3 px-4 border-b-2 border-pink-500 text-pink-500 font-medium">
+                All Events
+              </button>
+            </div>
+          )}
         </header>
 
         {/* Main Content Area */}
@@ -541,6 +569,30 @@ const AdminDashboard = () => {
                     </span>
                   </div>
                 </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                  <div className="flex justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Registrations</p>
+                      <p className="text-2xl font-bold mt-1 text-gray-800">{registrationCount}</p>
+                    </div>
+                    <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                      <ClipboardList size={24} className="text-green-600" />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center">
+                    <span className="text-green-500 text-xs font-medium flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span>Updated now</span>
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Events Table & Activity Feed */}
@@ -548,7 +600,7 @@ const AdminDashboard = () => {
                 {/* Events Table */}
                 <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
                   <div className="px-6 py-4 border-b border-gray-100">
-                    <h2 className="font-semibold text-gray-800">Upcoming Events</h2>
+                    <h2 className="font-semibold text-gray-800">Events</h2>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -557,7 +609,6 @@ const AdminDashboard = () => {
                           <th className="px-6 py-3 border-b border-gray-100">Event Name</th>
                           <th className="px-6 py-3 border-b border-gray-100">Location</th>
                           <th className="px-6 py-3 border-b border-gray-100">Date</th>
-                          <th className="px-6 py-3 border-b border-gray-100">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -571,16 +622,11 @@ const AdminDashboard = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {event.startTime ? new Date(event.startTime).toLocaleDateString() : "N/A"}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)} text-white`}>
-                                  {event.status?.charAt(0).toUpperCase() + event.status?.slice(1) || 'Unknown'}
-                                </span>
-                              </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                            <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
                               No events found. Create your first event!
                             </td>
                           </tr>
@@ -638,150 +684,355 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-gray-800">Create New Event</h3>
-                    <div className="p-2 rounded-lg bg-pink-100">
-                      <Calendar size={20} className="text-pink-600" />
-                    </div>
+              {/* Latest Registrations */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="font-semibold text-gray-800">Latest Registrations</h2>
+                </div>
+                <div className="p-6">
+                  {registrations.slice(0, 5).map((registration) => {
+                    const event = events.find(e => e.id === registration.eventId);
+                    const user = allUsers.find(u => u.id === registration.userId);
+                    
+                    return (
+                      <div key={registration.id} className="mb-4 last:mb-0">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">
+                              {user ? `${user.firstName} ${user.lastName}` : 'Unknown User'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Registered for {event ? event.name : 'Unknown Event'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {registration.registrationDate ? new Date(registration.registrationDate).toLocaleString() : 'N/A'}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {registrations.length === 0 && (
+                    <p className="text-sm text-gray-500">No recent registrations</p>
+                  )}
+                  <div className="mt-4 text-center">
+                    <button 
+                      className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                      onClick={() => setActiveTab("registrations")}
+                    >
+                      View All Registrations
+                    </button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Quickly create a new event with essential details. You can edit more settings later.
-                  </p>
-                  <button
-                    onClick={() => {
-                      resetForm();
-                      setActiveTab("events");
-                    }}
-                    className="w-full bg-pink-600 hover:bg-pink-700 text-white py-2 px-4 rounded-lg flex items-center justify-center"
-                  >
-                    <Plus size={18} className="mr-2" />
-                    <span>Create Event</span>
-                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Events Management View */}
-          {activeTab === "events" && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Left sidebar - events list */}
-              <div className="lg:col-span-1 space-y-4">
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="font-medium text-gray-700">All Events</h3>
-                    <button
-                      className="h-8 w-8 rounded-full flex items-center justify-center bg-pink-100 text-pink-600 hover:bg-pink-200"
-                      onClick={() => resetForm()}
-                    >
-                      <Plus size={18} />
-                    </button>
+          {/* Registrations View */}
+          {activeTab === "registrations" && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Registration Management</h2>
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search registrations..."
+                      className="px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                    <Search size={18} className="absolute right-3 top-2.5 text-gray-400" />
                   </div>
-
-                  <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                    {events.length > 0 ? (
-                      events.map((event) => (
-                        <button
-                          key={event.id}
-                          onClick={() => {
-                            handleEdit(event);
-                            setActiveTab("events");
-                          }}
-                          className={`w-full px-4 py-3 flex items-center hover:bg-gray-50 ${
-                            selectedEvent?.id === event.id ? "bg-indigo-50 border-l-4 border-indigo-500" : ""
-                          }`}
-                        >
-                          <div className="flex flex-col text-left">
-                            <span className="text-sm font-semibold text-gray-800">{event.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {event.startTime ? new Date(event.startTime).toLocaleDateString() : "N/A"}
-                            </span>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-gray-500">No events available.</div>
-                    )}
-                  </div>
+                  <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    <option value="all">All Events</option>
+                    {events.map(event => (
+                      <option key={event.id} value={event.id}>{event.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Right content - event form */}
-              <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                {(selectedEvent || editing) ? (
-                  <>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                      {editing ? "Edit Event" : "Create New Event"}
-                    </h3>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Registrations Table */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-lg">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3">User</th>
+                      <th className="px-6 py-3">Event</th>
+                      <th className="px-6 py-3">Registration Date</th>
+                      <th className="px-6 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {registrations.length > 0 ? (
+                      registrations.map((registration) => {
+                        // Find the event name for this registration
+                        const event = events.find(e => e.id === registration.eventId);
+                        // Find the user for this registration
+                        const user = allUsers.find(u => u.id === registration.userId);
+                        
+                        return (
+                          <tr key={registration.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                              {user ? `${user.firstName} ${user.lastName}` : 'Unknown User'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              {event ? event.name : 'Unknown Event'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              {registration.registrationDate ? new Date(registration.registrationDate).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
+                                <button 
+                                  className="text-indigo-600 hover:text-indigo-900"
+                                  onClick={() => setSelectedRegistration(registration)}
+                                >
+                                  View
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No registrations found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-700">
+                  Showing <span className="font-medium">1</span> to <span className="font-medium">{registrations.length}</span> of{" "}
+                  <span className="font-medium">{registrations.length}</span> results
+                </div>
+                <nav className="flex justify-center space-x-1">
+                  <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">Previous</button>
+                  <button className="px-3 py-1 rounded-md bg-pink-600 text-white">1</button>
+                  <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">Next</button>
+                </nav>
+              </div>
+              
+              {/* Registration Detail Modal */}
+              {selectedRegistration && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold">Registration Details</h3>
+                      <button 
+                        onClick={() => setSelectedRegistration(null)} 
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-6">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Event Name</label>
+                        <p className="text-sm text-gray-500">Attendee</p>
+                        <p className="font-medium">
+                          {selectedRegistration.userName || 
+                            (allUsers.find(u => u.id === selectedRegistration.userId) 
+                              ? `${allUsers.find(u => u.id === selectedRegistration.userId).firstName} ${allUsers.find(u => u.id === selectedRegistration.userId).lastName}`
+                                                            : 'Unknown')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email</p>
+                        <p className="font-medium">
+                          {selectedRegistration.userEmail || 
+                            (allUsers.find(u => u.id === selectedRegistration.userId) 
+                              ? allUsers.find(u => u.id === selectedRegistration.userId).email
+                              : 'N/A')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Event</p>
+                        <p className="font-medium">
+                          {selectedRegistration.eventName || 
+                            (events.find(e => e.id === selectedRegistration.eventId) 
+                              ? events.find(e => e.id === selectedRegistration.eventId).name
+                              : 'Unknown')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Registration Date</p>
+                        <p className="font-medium">
+                          {selectedRegistration.registrationDate ? new Date(selectedRegistration.registrationDate).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t border-gray-200 pt-4">
+                      <h4 className="font-medium mb-2">Additional Information</h4>
+                      <p className="text-sm text-gray-600">
+                        {selectedRegistration.additionalInfo || 'No additional information provided.'}
+                      </p>
+                    </div>
+                    
+                    <div className="flex justify-end mt-6">
+                      <button 
+                        onClick={() => setSelectedRegistration(null)}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Events View */}
+          {activeTab === "events" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Events List */}
+              <div className="bg-white rounded-xl shadow-sm lg:col-span-2">
+                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                  <h2 className="font-semibold text-gray-800">All Events</h2>
+                  <button
+                    onClick={() => {
+                      resetForm();
+                      setSelectedEvent(null);
+                    }}
+                    className="bg-pink-600 hover:bg-pink-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center"
+                  >
+                    <Plus size={18} className="mr-1" />
+                    New Event
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 border-b border-gray-100">Event Name</th>
+                        <th className="px-6 py-3 border-b border-gray-100">Location</th>
+                        <th className="px-6 py-3 border-b border-gray-100">Date</th>
+                        <th className="px-6 py-3 border-b border-gray-100">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {events.length > 0 ? (
+                        events.map((event) => (
+                          <tr key={event.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div 
+                                className="font-medium text-gray-800 cursor-pointer" 
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  handleEdit(event);
+                                }}
+                              >
+                                {event.name}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.location}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                              {event.startTime ? new Date(event.startTime).toLocaleDateString() : "N/A"}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <button
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  handleEdit(event);
+                                }}
+                                className="text-indigo-600 hover:text-indigo-900 mr-3"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(event.id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                            No events found. Create your first event!
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Event Form */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  {editing ? "Edit Event" : "Create New Event"}
+                </h2>
+                {(selectedEvent || !editing) ? (
+                  <>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                          Event Name
+                        </label>
                         <input
                           type="text"
-                          name="name"
                           id="name"
+                          name="name"
                           value={form.name}
                           onChange={handleChange}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 sm:text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label>
+                        <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+                          Location
+                        </label>
                         <input
                           type="text"
-                          name="location"
                           id="location"
+                          name="location"
                           value={form.location}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 sm:text-sm"
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">Start Time</label>
+                        <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-1">
+                          Start Date & Time
+                        </label>
                         <input
                           type="datetime-local"
-                          name="startTime"
                           id="startTime"
+                          name="startTime"
                           value={form.startTime}
                           onChange={handleChange}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 sm:text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">End Time</label>
+                        <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-1">
+                          End Date & Time
+                        </label>
                         <input
                           type="datetime-local"
-                          name="endTime"
                           id="endTime"
+                          name="endTime"
                           value={form.endTime}
                           onChange={handleChange}
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 sm:text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                         />
-                      </div>
-
-                      <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
-                          name="status"
-                          id="status"
-                          value={form.status}
-                          onChange={handleChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 sm:text-sm"
-                        >
-                          <option value="upcoming">Upcoming</option>
-                          <option value="active">Active</option>
-                          <option value="completed">Completed</option>
-                        </select>
                       </div>
 
                       <div className="flex space-x-4">
@@ -793,101 +1044,262 @@ const AdminDashboard = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => resetForm()}
+                          onClick={() => {
+                            resetForm();
+                            setSelectedEvent(null);
+                          }}
                           className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
                         >
                           Cancel
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(form.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center"
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          Delete
-                        </button>
+                        {editing && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(form.id)}
+                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </form>
                   </>
                 ) : (
                   <div className="text-gray-500 text-center py-20">
-                    Select an event from the list to view or edit details.
+                    Select an event from the list to edit or click "New Event" to create a new one.
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* All Admins List (Users tab) */}
-          {activeTab === "users" && (
-            <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-semibold mb-6 text-center">All Admins</h2>
-              {adminUsers.length > 0 ? (
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adminUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-100">
-                        <td className="border border-gray-300 px-4 py-2">{user.firstName} {user.lastName}</td>
-                        <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-                        <td className="border border-gray-300 px-4 py-2">{user.role}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-gray-500">No administrators found.</p>
-              )}
-            </div>
-          )}
-
-          {/* All Users List (All Users tab) */}
+          {/* All Users View */}
           {activeTab === "all-users" && (
-            <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-semibold mb-6 text-center">All Users</h2>
-              {allUsers.length > 0 ? (
-                <table className="w-full border-collapse border border-gray-300">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">All Users</h2>
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search users..."
+                      className="px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                    <Search size={18} className="absolute right-3 top-2.5 text-gray-400" />
+                  </div>
+                  <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    <option value="all">All Users</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-lg">
                   <thead>
-                    <tr>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Phone Number</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Role</th>
+                    <tr className="bg-gray-50 border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3">Name</th>
+                      <th className="px-6 py-3">Email</th>
+                      <th className="px-6 py-3">Phone</th>
+                      <th className="px-6 py-3">Registered</th>
+                      <th className="px-6 py-3">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {allUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-100">
-                        <td className="border border-gray-300 px-4 py-2">{user.firstName} {user.lastName}</td>
-                        <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-                        <td className="border border-gray-300 px-4 py-2">{user.phoneNumber || "-"}</td>
-                        <td className="border border-gray-300 px-4 py-2">{user.role}</td>
+                  <tbody className="divide-y divide-gray-200">
+                    {allUsers.length > 0 ? (
+                      allUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                            {user.firstName} {user.lastName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.phoneNumber || 'N/A'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button className="text-indigo-600 hover:text-indigo-900">View</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No users found
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
-              ) : (
-                <p className="text-gray-500">No users found.</p>
-              )}
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-700">
+                  Showing <span className="font-medium">1</span> to <span className="font-medium">{allUsers.length}</span> of{" "}
+                  <span className="font-medium">{allUsers.length}</span> results
+                </div>
+                <nav className="flex justify-center space-x-1">
+                  <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">Previous</button>
+                  <button className="px-3 py-1 rounded-md bg-pink-600 text-white">1</button>
+                  <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">Next</button>
+                </nav>
+              </div>
             </div>
           )}
 
-          {/* Admin Creation Form (Admins tab) */}
+          {/* All Admins View */}
+          {activeTab === "users" && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">All Administrators</h2>
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search admins..."
+                      className="px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                    <Search size={18} className="absolute right-3 top-2.5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-lg">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3">Name</th>
+                      <th className="px-6 py-3">Email</th>
+                      <th className="px-6 py-3">Phone</th>
+                      <th className="px-6 py-3">Registered</th>
+                      <th className="px-6 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {adminUsers.length > 0 ? (
+                      adminUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                            {user.firstName} {user.lastName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.phoneNumber || 'N/A'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => handleEditAdmin(user)}
+                                className="text-indigo-600 hover:text-indigo-900 mr-3"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAdmin(user.id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                          No admin users found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-700">
+                  Showing <span className="font-medium">1</span> to <span className="font-medium">{adminUsers.length}</span> of{" "}
+                  <span className="font-medium">{adminUsers.length}</span> results
+                </div>
+                <nav className="flex justify-center space-x-1">
+                  <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">Previous</button>
+                  <button className="px-3 py-1 rounded-md bg-pink-600 text-white">1</button>
+                  <button className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">Next</button>
+                </nav>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Management View */}
           {activeTab === "admins" && (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-semibold mb-6 text-center">Add New Administrator</h2>
-              <form onSubmit={handleAdminSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Admin List */}
+              <div className="bg-white rounded-xl shadow-sm lg:col-span-2">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="font-semibold text-gray-800">Administrators</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 border-b border-gray-100">Name</th>
+                        <th className="px-6 py-3 border-b border-gray-100">Email</th>
+                        <th className="px-6 py-3 border-b border-gray-100">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {adminUsers.length > 0 ? (
+                        adminUsers.map((user) => (
+                          <tr key={user.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="font-medium text-gray-800">
+                                {user.firstName} {user.lastName}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.email}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <button
+                                onClick={() => handleEditAdmin(user)}
+                                className="text-indigo-600 hover:text-indigo-900 mr-3"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAdmin(user.id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
+                            No administrators found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Admin Creation Form */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  {editingAdmin ? "Edit Administrator" : "Create New Administrator"}
+                </h2>
+                <form onSubmit={handleAdminSubmit} className="space-y-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name
+                    </label>
                     <input
                       type="text"
                       id="firstName"
@@ -895,12 +1307,19 @@ const AdminDashboard = () => {
                       value={adminForm.firstName}
                       onChange={handleAdminChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className={`w-full px-3 py-2 border ${
+                        adminErrors.firstName ? 'border-red-500' : 'border-gray-300'
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
                     />
-                    {adminErrors.firstName && <p className="text-red-500 text-xs mt-1">{adminErrors.firstName}</p>}
+                    {adminErrors.firstName && (
+                      <p className="mt-1 text-sm text-red-600">{adminErrors.firstName}</p>
+                    )}
                   </div>
+
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
                     <input
                       type="text"
                       id="lastName"
@@ -908,83 +1327,145 @@ const AdminDashboard = () => {
                       value={adminForm.lastName}
                       onChange={handleAdminChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className={`w-full px-3 py-2 border ${
+                        adminErrors.lastName ? 'border-red-500' : 'border-gray-300'
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
                     />
-                    {adminErrors.lastName && <p className="text-red-500 text-xs mt-1">{adminErrors.lastName}</p>}
+                    {adminErrors.lastName && (
+                      <p className="mt-1 text-sm text-red-600">{adminErrors.lastName}</p>
+                    )}
                   </div>
-                </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={adminForm.email}
-                    onChange={handleAdminChange}
-                    required
-                    className={`w-full px-3 py-2 border ${adminErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
-                  />
-                  {adminErrors.email && <p className="text-red-500 text-xs mt-1">{adminErrors.email}</p>}
-                </div>
-                <div>
-                  <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={adminForm.phoneNumber}
-                    onChange={handleAdminChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="+212 6 1234 5678"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={adminForm.email}
+                      onChange={handleAdminChange}
+                      required
+                      className={`w-full px-3 py-2 border ${
+                        adminErrors.email ? 'border-red-500' : 'border-gray-300'
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
+                    />
+                    {adminErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">{adminErrors.email}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={adminForm.password}
-                    onChange={handleAdminChange}
-                    required
-                    className={`w-full px-3 py-2 border ${adminErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
-                  />
-                  {adminErrors.password && <p className="text-red-500 text-xs mt-1">{adminErrors.password}</p>}
-                </div>
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      value={adminForm.phoneNumber}
+                      onChange={handleAdminChange}
+                      className={`w-full px-3 py-2 border ${
+                        adminErrors.phoneNumber ? 'border-red-500' : 'border-gray-300'
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
+                    />
+                    {adminErrors.phoneNumber && (
+                      <p className="mt-1 text-sm text-red-600">{adminErrors.phoneNumber}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={adminForm.confirmPassword}
-                    onChange={handleAdminChange}
-                    required
-                    className={`w-full px-3 py-2 border ${adminErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
-                  />
-                  {adminErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{adminErrors.confirmPassword}</p>}
-                </div>
+                  {/* Only show password fields when creating new admin */}
+                  {!editingAdmin && (
+                    <>
+                      <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          id="password"
+                          name="password"
+                          value={adminForm.password}
+                          onChange={handleAdminChange}
+                          required={!editingAdmin}
+                          className={`w-full px-3 py-2 border ${
+                            adminErrors.password ? 'border-red-500' : 'border-gray-300'
+                          } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
+                        />
+                        {adminErrors.password && (
+                          <p className="mt-1 text-sm text-red-600">{adminErrors.password}</p>
+                        )}
+                      </div>
 
-                <input type="hidden" name="role" value="admin" />
+                      <div>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                          Confirm Password
+                        </label>
+                        <input
+                          type="password"
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          value={adminForm.confirmPassword}
+                          onChange={handleAdminChange}
+                          required={!editingAdmin}
+                          className={`w-full px-3 py-2 border ${
+                            adminErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                          } rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`}
+                        />
+                        {adminErrors.confirmPassword && (
+                          <p className="mt-1 text-sm text-red-600">{adminErrors.confirmPassword}</p>
+                        )}
+                      </div>
+                    </>
+                  )}
 
-                <button
-                  type="submit"
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white py-2 px-4 rounded-lg font-semibold transition"
-                >
-                  Create Administrator
-                </button>
-              </form>
-            </div>
-          )}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="agreedToTerms"
+                      name="agreedToTerms"
+                      checked={adminForm.agreedToTerms}
+                      onChange={(e) => setAdminForm({ ...adminForm, agreedToTerms: e.target.checked })}
+                      className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="agreedToTerms" className="ml-2 block text-sm text-gray-700">
+                      I agree to the terms and conditions
+                    </label>
+                  </div>
 
-          {/* Settings view */}
-          {activeTab === "settings" && (
-            <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-semibold mb-6 text-center">Settings</h2>
-              <p className="text-center text-gray-500">Settings page content goes here.</p>
+                  <div className="pt-2 flex space-x-4">
+                    <button
+                      type="submit"
+                      className="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                    >
+                      {editingAdmin ? "Update Administrator" : "Create Administrator"}
+                    </button>
+                    {editingAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingAdmin(false);
+                          setSelectedAdmin(null);
+                          setAdminForm({
+                            email: '',
+                            password: '',
+                            confirmPassword: '',
+                            firstName: '',
+                            lastName: '',
+                            phoneNumber: '',
+                            role: 'admin',
+                            agreedToTerms: true
+                          });
+                        }}
+                        className="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
             </div>
           )}
         </main>
