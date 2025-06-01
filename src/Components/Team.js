@@ -1,25 +1,26 @@
 import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import image from "../Assets/PIc.jpg";
 
 const team = [
   {
-    name: 'Thomas',
-    role: 'Lorem Ipsum',
+    name: 'Name',
+    role: 'UI Designer',
     image: 'https://storage.googleapis.com/a1aa/image/76507a03-696c-4299-5334-26f3ad9b5f8b.jpg',
   },
   {
-    name: 'Thomas',
-    role: 'Lorem Ipsum',
+    name: 'Name',
+    role: 'Developer',
     image: 'https://storage.googleapis.com/a1aa/image/4040a3ec-8349-4530-2736-09fde1cfd990.jpg',
   },
   {
-    name: 'Thomas',
-    role: 'Lorem Ipsum',
+    name: 'Name',
+    role: 'Event Organizer',
     image: 'https://storage.googleapis.com/a1aa/image/5597f54e-9ede-4447-27c8-a79e65055fbd.jpg',
   },
   {
-    name: 'Thomas',
-    role: 'Lorem Ipsum',
+    name: 'Name',
+    role: 'Marketing Coordinator',
     image: 'https://storage.googleapis.com/a1aa/image/402a7620-565c-4b71-5faa-c8dc71f51adc.jpg',
   },
 ];
@@ -59,13 +60,13 @@ const TeamCard = ({ name, role, image }) => (
 );
 
 const Team = () => (
-  <div className="  flex items-center justify-center p-6 py-[90px]">
+  <div className="flex items-center justify-center p-6 py-[90px] bg-white">
     <section className="w-full max-w-7xl text-center">
-      <p className="text-[12px] text-black mb-1">Event team</p>
-      <h2 className="text-[20px] font-semibold mb-10">Meet Our team</h2>
+      <p className="text-[12px] text-black mb-1 uppercase tracking-widest">Event Team</p>
+      <h2 className="text-[24px] font-semibold mb-10">Meet Our Team</h2>
       <div className="flex flex-wrap justify-center gap-x-16 gap-y-10">
-        {team.map((speaker, index) => (
-          <TeamCard key={index} {...speaker} />
+        {team.map((member, index) => (
+          <TeamCard key={index} {...member} />
         ))}
       </div>
     </section>

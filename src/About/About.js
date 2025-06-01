@@ -52,10 +52,7 @@ const About = () => {
           <p className="text-sm mb-2 ">About Us</p>
           <h2 className="lg:text-2xl font-semibold mb-4  max-sm:mb-[10px] ">Know More About Event</h2>
           <p className="text-sm leading-relaxed mb-8  max-sm:mb-[10px] ">
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
-            industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and
-            scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into
-            electronic typesetting, remaining essentially unchanged.
+         Evenza is your go-to platform for easy event planning and registration. Whether you're hosting or attending, we make the process smooth, fast, and reliable. Built with the latest tech, Evenza helps you plan today and enjoy tomorrow—stress-free.
           </p>
           <div className="flex items-center gap-3">
             <div className="flex -space-x-3">

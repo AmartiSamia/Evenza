@@ -3,25 +3,25 @@ import React from 'react';
 const EventFeatures = () => {
   // Feature card data
   const features = [
-    {
+{
       id: 1,
-      title: "Speaker Lineup",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
+      title: "Seamless Registration",
+      description: "Register for events in just a few clicks—no hassle, no delays."
     },
     {
       id: 2,
-      title: "Speaker Lineup",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
+      title: "Real-Time Updates",
+      description: "Stay informed with instant notifications about schedule changes and announcements."
     },
     {
       id: 3,
-      title: "Speaker Lineup",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
+      title: "Engaging Speakers",
+      description: "Discover talks from industry leaders and inspirational voices."
     },
     {
       id: 4,
-      title: "Speaker Lineup",
-      description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
+      title: "Smart Event Dashboard",
+      description: "Manage and view your events with ease through our intuitive dashboard."
     }
   ];
 

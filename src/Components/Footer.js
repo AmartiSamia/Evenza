@@ -57,7 +57,7 @@ const Footer = () => {
         {/* Bottom Line */}
         <div className="mt-12 pt-6 border-t border-gray-200">
           <div className="text-center text-sm text-gray-600">
-            <span>© 2024 Evenza. All rights reserved. Built by Samia El Amarti.</span>
+            <span> Built by Samia El Amarti.</span>
           </div>
         </div>
       </div>

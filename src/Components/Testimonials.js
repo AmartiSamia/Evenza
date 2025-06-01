@@ -3,18 +3,18 @@ import React from 'react';
 const Testimonials = () => {
   const testimonials = [
     {
-      name: 'Thomas',
+      name: 'Name',
       image:
         'https://storage.googleapis.com/a1aa/image/a22e272f-dd58-45fe-e973-fb0ab87f4d6f.jpg',
-      alt: 'Portrait of a man in a black suit with arms crossed, smiling',
-      text: '"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s"',
+      alt: 'Profile image of User001',
+      text: '"The platform is intuitive and made organizing my event super easy!"',
     },
     {
-      name: 'Emily',
+      name: 'Name',
       image:
         'https://storage.googleapis.com/a1aa/image/5eefaf09-e7eb-4410-19c3-7d039bd32ccb.jpg',
-      alt: 'Portrait of a woman with long hair smiling, wearing a white top',
-      text: '"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s"',
+      alt: 'Profile image of User002',
+      text: '"Evenza helped us manage everything from start to finish—highly recommended!"',
     },
   ];
 
@@ -23,13 +23,12 @@ const Testimonials = () => {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <p className="text-yellow-300 text-sm font-medium tracking-wider uppercase mb-2">Testimonials</p>
-          <h2 className="text-white text-3xl font-bold">What Our Customers Say</h2>
+          <h2 className="text-white text-3xl font-bold">What Our Users Say</h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {testimonials.map((t, index) => (
             <div key={index} className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 relative overflow-hidden">
-              {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500 opacity-10 rounded-full -mr-12 -mt-12"></div>
               <div className="absolute bottom-0 left-0 w-16 h-16 bg-yellow-300 opacity-10 rounded-full -ml-8 -mb-8"></div>
               
