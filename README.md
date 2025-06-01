@@ -1,50 +1,27 @@
-# Evenza Frontend - Event Management Platform
+# Evenza Frontend
 
-A modern, responsive event planning platform built with React and Tailwind CSS. Evenza provides a comprehensive solution for event management with dedicated interfaces for both administrators and users.
+React-based event management platform with admin and user dashboards. Built with React, Tailwind CSS, and JWT authentication. Works with ASP.NET Core backend.
 
-## 🚀 Features
+## Features
+**Admin Dashboard**
+- Event CRUD operations
+- User management & registration tracking
+- Admin controls and analytics
 
-### Admin Dashboard
-- **Event Management**: Create, edit, delete, and manage all events with CRUD operations
-- **User Management**: View and manage all registered users and their event registrations
-- **Registration Tracking**: Monitor event registrations with detailed analytics
-- **Admin Controls**: Add new administrators and manage platform access
+**User Experience**
+- Event discovery and registration
+- Profile management
+- Personalized dashboard
 
-### User Experience
-- **Event Discovery**: Browse and search upcoming events with intuitive filtering
-- **User Profiles**: Complete profile management with edit capabilities
-- **Event Registration**: Seamless event registration with real-time updates
-- **User Settings**: Personalized dashboard and account management
+## Tech Stack
+- React.js + Tailwind CSS
+- JWT authentication
+- React Hooks + Axios
+- React Router DOM
+- ASP.NET Core backend (separate repo)
 
-## 🛠️ Tech Stack
-
-- **Framework**: React.js
-- **Styling**: Tailwind CSS
-- **Authentication**: JWT (JSON Web Tokens)
-- **State Management**: React Hooks
-- **HTTP Client**: Axios
-- **Routing**: React Router DOM
-
-## 🎨 UI/UX Features
-
-- Fully responsive design for all devices
-- Modern, clean interface with smooth animations
+## UI/UX
+- Fully responsive design
+- Modern interface with animations
 - Real-time form validation
-- Interactive modals and components
-- Accessible design patterns
-
-## 🔐 Security
-
-- JWT-based authentication
-- Role-based access control (Admin/User)
-- Protected routes and components
-- Secure API communication
-
-## 📱 Responsive Design
-
-- Mobile-first approach
-- Tablet and desktop optimized
-- Cross-browser compatibility
-- Progressive Web App features
-
-
+- Interactive modals
