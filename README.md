@@ -47,4 +47,4 @@ A modern, responsive event planning platform built with React and Tailwind CSS. 
 - Cross-browser compatibility
 - Progressive Web App features
 
-Perfect for event organizers, companies, and communities looking for a professional event management solution.
+
